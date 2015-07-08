@@ -1,68 +1,65 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using System.Runtime.InteropServices;
-using Emgu.CV.CvEnum;
+
 
 #region 存檔用
+
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
-using System.Diagnostics;
-#endregion
+
+#endregion 存檔用
 
 namespace 磁磚辨識評分
 {
-
     public partial class FormUserDef : Form
     {
         #region 公用變數
-        string fileName;
-        Image<Bgr, Byte> ImageForShow;
-        Image<Bgr, Byte> BaseImage;
 
+        private string fileName;
+        private Image<Bgr, Byte> ImageForShow;
+        private Image<Bgr, Byte> BaseImage;
 
-        Image<Bgr, Byte> ThumbnailImage;
-        Image<Bgr, Byte> imageWatchArea;
-        List<MCvBox2D> BaseMcvBox2DList;
+        private Image<Bgr, Byte> ThumbnailImage;
+        private Image<Bgr, Byte> imageWatchArea;
+        private List<MCvBox2D> BaseMcvBox2DList;
 
-        double ScaleOfThumbnail = 1;
-        Point centerOfWatchArea = new Point(0, 0);
-        Point pointDragStart = new Point(0, 0);
-        Point CenterOfThumbnailWatchArea = new Point(0, 0);
-        Point CenterOfWatchAreaWhenDragStart = new Point(0, 0);
-        bool mouseDownInPicboxThumbnail = false;
-        bool mouseDownInPicboxWatchArea = false;
-        int WatchAreaMode = WatchAreaModeNum.Browse;
+        private double ScaleOfThumbnail = 1;
+        private Point centerOfWatchArea = new Point(0, 0);
+        private Point pointDragStart = new Point(0, 0);
+        private Point CenterOfThumbnailWatchArea = new Point(0, 0);
+        private Point CenterOfWatchAreaWhenDragStart = new Point(0, 0);
+        private bool mouseDownInPicboxThumbnail = false;
+        private bool mouseDownInPicboxWatchArea = false;
+        private int WatchAreaMode = WatchAreaModeNum.Browse;
 
-        Dictionary<string, double> PixelPerCentimeter = new Dictionary<string, double>();
+        private Dictionary<string, double> PixelPerCentimeter = new Dictionary<string, double>();
 
+        private List<Point> pointsOfAddingTile = new List<Point>();
 
-
-
-        List<Point> pointsOfAddingTile = new List<Point>();
-        
         /// <summary>只評分上半</summary>
-        bool RankTopOnly = true;
+        private bool RankTopOnly = true;
 
         #region 和定義邊界有關的變數
-        Grid WorkspaceType = 0;
-        Point WorkspaceLeftTop = Point.Empty;
-        Point WorkspaceRightDown = Point.Empty;
-        #endregion
+
+        private Grid WorkspaceType = 0;
+        private Point WorkspaceLeftTop = Point.Empty;
+        private Point WorkspaceRightDown = Point.Empty;
+
+        #endregion 和定義邊界有關的變數
 
         /// <summary>按下space</summary>
-        bool spaceDown = false;
+        private bool spaceDown = false;
 
-        #endregion
+        #endregion 公用變數
 
         #region 初始化
+
         /// <summary>FormUserDef 建構函式</summary>
         public FormUserDef()
         {
@@ -79,7 +76,6 @@ namespace 磁磚辨識評分
             foreach (MCvBox2D box in BaseMcvBox2DList)
             {
                 ImageForShow.Draw(box, new Bgr(Color.Red), 1);
-
             }
             for (int index = 0; index < BaseMcvBox2DList.Count; index++)
             {
@@ -95,40 +91,43 @@ namespace 磁磚辨識評分
             imageWatchArea = new Image<Bgr, byte>(new Size(picboxWatchArea.Width, picboxWatchArea.Height));
 
             #region 初始化縮圖和觀看視窗
+
             drawThumbnailImage();
             drawWatchArea();
             lblTileCount.Text = "總數：" + BaseMcvBox2DList.Count.ToString();
-            #endregion
+
+            #endregion 初始化縮圖和觀看視窗
 
             //設定比例參數
             SetPixelPerCentimeter(Path.GetFileNameWithoutExtension(fileName));
             //顯示檔名
             this.Text = fileName;
             this.fileName = fileName;
-
         }
 
-        #endregion
+        #endregion 初始化
 
         #region 抓滑鼠座標方法
+
         [DllImport("user32.dll")]
-        static extern bool GetCursorPos(ref Point lpPoint);
+        private static extern bool GetCursorPos(ref Point lpPoint);
+
         public Point GetCursorPosition()
         {
             Point defPnt = new Point();
             GetCursorPos(ref defPnt);
             return defPnt;
         }
-        #endregion
+
+        #endregion 抓滑鼠座標方法
 
         #region 繪製縮圖的方框
+
         /// <summary>
         /// 繪製縮圖的方框
         /// </summary>
         private void drawThumbnailImage()
         {
-
-
             Image<Bgr, Byte> TempImage = ThumbnailImage.Clone();
 
             if (mouseDownInPicboxThumbnail)
@@ -142,20 +141,21 @@ namespace 磁磚辨識評分
                 CenterOfThumbnailWatchArea = new Point(
                     (int)((double)centerOfWatchArea.X * ScaleOfThumbnail),
                     (int)((double)centerOfWatchArea.Y * ScaleOfThumbnail));
-                #endregion
 
+                #endregion 這裡以目前的WatchArea位置去繪製縮圖的方框
             }
             else
             {
                 #region 初始化或預設
+
                 CenterOfThumbnailWatchArea = new Point(
 
                     ThumbnailImage.Width / 2,
                     ThumbnailImage.Height / 2
                     );
-                #endregion
-            }
 
+                #endregion 初始化或預設
+            }
 
             TempImage.Draw(
                 new Rectangle(
@@ -169,9 +169,9 @@ namespace 磁磚辨識評分
         }
 
         #region 指定繪製中心
+
         private void drawThumbnailImage(int x, int y)
         {
-
             Image<Bgr, Byte> TempImage = ThumbnailImage.Clone();
 
             CenterOfThumbnailWatchArea = new Point(x, y);
@@ -186,15 +186,17 @@ namespace 磁磚辨識評分
 
             picboxThumbnail.Image = TempImage.ToBitmap();
         }
-        #endregion
 
-        #endregion
+        #endregion 指定繪製中心
+
+        #endregion 繪製縮圖的方框
 
         #region 繪製觀看視窗
+
         private void drawWatchArea()
         {
-
             #region 找到觀看視窗的中心點
+
             if (mouseDownInPicboxThumbnail)
             {
                 centerOfWatchArea = getMouseLocationRelayToThumbnailImage();
@@ -203,38 +205,46 @@ namespace 磁磚辨識評分
             }
             else if (mouseDownInPicboxWatchArea)
             {
-
                 #region 透過紀錄拖曳開始時的WatchArea中心與滑鼠的座標位置，在拖曳時設定新的WatChArea
+
                 centerOfWatchArea = new Point(
             CenterOfWatchAreaWhenDragStart.X + pointDragStart.X - getMouseLocationRelayTopicboxWatchArea().X,
             CenterOfWatchAreaWhenDragStart.Y + pointDragStart.Y - getMouseLocationRelayTopicboxWatchArea().Y);
-                #endregion
+
+                #endregion 透過紀錄拖曳開始時的WatchArea中心與滑鼠的座標位置，在拖曳時設定新的WatChArea
             }
             else
             {
                 #region 初始化或預設
+
                 centerOfWatchArea = new Point(
                     ImageForShow.Width / 2,
                     ImageForShow.Height / 2);
-                #endregion
-            }
-            #endregion
 
+                #endregion 初始化或預設
+            }
+
+            #endregion 找到觀看視窗的中心點
 
             picboxWatchArea.Image = ImageForShow.Copy(new MCvBox2D((PointF)centerOfWatchArea, new SizeF((float)picboxWatchArea.Width, (float)picboxWatchArea.Height), 0.0f)).ToBitmap();
         }
 
         #region 繪製觀看視窗在(x,y)位置
+
         private void drawWatchArea(int x, int y)
         {
             centerOfWatchArea = new Point(x, y);
             picboxWatchArea.Image = ImageForShow.Copy(new MCvBox2D((PointF)centerOfWatchArea, new SizeF((float)picboxWatchArea.Width, (float)picboxWatchArea.Height), 0.0f)).ToBitmap();
         }
-        #endregion
-        #endregion
+
+        #endregion 繪製觀看視窗在(x,y)位置
+
+        #endregion 繪製觀看視窗
 
         #region 取得座標函式
+
         #region 取得滑鼠相對於縮圖左上角的座標
+
         /// <summary>
         /// 取得滑鼠相對於縮圖左上角的座標
         /// </summary>
@@ -247,9 +257,11 @@ namespace 磁磚辨識評分
                 ThumbnailImage.Height / 2 - picboxThumbnail.Height / 2);
             return pointClickRelateToThumbnailImage;
         }
-        #endregion
+
+        #endregion 取得滑鼠相對於縮圖左上角的座標
 
         #region 取得滑鼠相對於原圖左上角的座標
+
         /// <summary>
         /// 取得滑鼠相對於原圖左上角的座標
         /// </summary>
@@ -262,9 +274,11 @@ namespace 磁磚辨識評分
                 centerOfWatchArea.Y - picboxWatchArea.Height / 2);
             return pointClickRelateToBaseImage;
         }
-        #endregion
+
+        #endregion 取得滑鼠相對於原圖左上角的座標
 
         #region 取得滑鼠相對於picboxWatchArea左上角的座標
+
         /// <summary>
         /// 取得滑鼠相對於picboxWatchArea左上角的座標
         /// </summary>
@@ -276,9 +290,9 @@ namespace 磁磚辨識評分
             return pointClickRelateToPicboxWatchArea;
         }
 
-        #endregion
-        #endregion
+        #endregion 取得滑鼠相對於picboxWatchArea左上角的座標
 
+        #endregion 取得座標函式
 
         /// <summary>將目前的ImageForShow廢棄，依據BaseImage、BaseMcvBox2DList、工作區繪製新的</summary>
         private void drawImageForShow()
@@ -286,6 +300,7 @@ namespace 磁磚辨識評分
             ImageForShow = BaseImage.Clone();
 
             #region 畫網格
+
             if (WorkspaceLeftTop != Point.Empty && WorkspaceRightDown != Point.Empty && ckbShowWeb.Checked)
             {
                 switch (WorkspaceType)
@@ -293,6 +308,7 @@ namespace 磁磚辨識評分
                     case Grid.SquareGrid:
 
                         #region 畫鉛錘線
+
                         for (double LineNum = 0; LineNum <= 12.0; LineNum += 1.0)
                         {
                             ImageForShow.Draw(
@@ -301,9 +317,11 @@ namespace 磁磚辨識評分
                                     new Point((int)(WorkspaceLeftTop.X + (WorkspaceRightDown.X - WorkspaceLeftTop.X) / 12.0 * LineNum), WorkspaceRightDown.Y)),
                                 new Bgr(Color.White), 1);
                         }
-                        #endregion
+
+                        #endregion 畫鉛錘線
 
                         #region 畫水平線
+
                         for (double LineNum = 0; LineNum <= 12.0; LineNum += 1.0)
                         {
                             ImageForShow.Draw(
@@ -312,11 +330,15 @@ namespace 磁磚辨識評分
                                     new Point(WorkspaceRightDown.X, (int)(WorkspaceLeftTop.Y + (WorkspaceRightDown.Y - WorkspaceLeftTop.Y) / 12.0 * LineNum))),
                                 new Bgr(Color.White), 1);
                         }
-                        #endregion
+
+                        #endregion 畫水平線
 
                         break;
+
                     case Grid.RectangleGrid:
+
                         #region 畫長方形的網格，先建立暫時的RectangleGrid，然後利用之繪出格子
+
                         RectangleGrids tempRectangleGrids = new RectangleGrids(WorkspaceRightDown, WorkspaceLeftTop);
 
                         for (int column = 0; column < RectangleGrids.columnCount; column++)
@@ -325,9 +347,10 @@ namespace 磁磚辨識評分
                             {
                                 if ((column + row) % 2 != 1)
                                 {
-
                                     #region 如果是梅花座上的座標，將這個格子繪製出來
+
                                     #region 找出該格子的四角座標
+
                                     PointF GridLT = tempRectangleGrids.TileModelLT(column, row);
                                     PointF GridRT = tempRectangleGrids.TileModelRT(column, row);
                                     GridRT.X += (float)tempRectangleGrids.PixelFormMm(RectangleGrids.gapWidth);
@@ -336,7 +359,8 @@ namespace 磁磚辨識評分
                                     PointF GridRD = tempRectangleGrids.TileModelRD(column, row);
                                     GridRD.X += (float)tempRectangleGrids.PixelFormMm(RectangleGrids.gapWidth);
                                     GridRD.Y += (float)tempRectangleGrids.PixelFormMm(RectangleGrids.gapWidth);
-                                    #endregion
+
+                                    #endregion 找出該格子的四角座標
 
                                     ImageForShow.Draw(
                                         new LineSegment2DF(GridLT, GridRT),
@@ -358,20 +382,23 @@ namespace 磁磚辨識評分
                                             new Bgr(Color.White),
                                             1);
 
-                                    #endregion
+                                    #endregion 如果是梅花座上的座標，將這個格子繪製出來
                                 }
                             }
                         }
-                        #endregion
+
+                        #endregion 畫長方形的網格，先建立暫時的RectangleGrid，然後利用之繪出格子
 
                         break;
+
                     default:
                         MessageBox.Show("未預期：有定義網格邊界，卻無網格類型");
                         break;
                 }
-
             }
-            #endregion
+
+            #endregion 畫網格
+
             int EdgeWide = 1;
             if (ckbDrawBold.Checked)
             {
@@ -381,7 +408,6 @@ namespace 磁磚辨識評分
             {
                 ImageForShow.Draw(box, new Bgr(Color.Red), EdgeWide);
             }
-
         }
 
         private void picboxBorse_Click(object sender, EventArgs e)
@@ -417,7 +443,6 @@ namespace 磁磚辨識評分
                 pointDragStart = getMouseLocationRelayTopicboxWatchArea();
                 CenterOfWatchAreaWhenDragStart = centerOfWatchArea;
             }
-
         }
 
         private void picboxWatchArea_MouseUp(object sender, MouseEventArgs e)
@@ -442,9 +467,13 @@ namespace 磁磚辨識評分
             if (lbxTileList.SelectedIndex != -1 && WatchAreaMode == WatchAreaModeNum.Browse) //沒有選取的時候是-1
             {
                 #region 先洗掉之前選取的
+
                 drawImageForShow();
-                #endregion
+
+                #endregion 先洗掉之前選取的
+
                 #region 標明選取的，重繪
+
                 ImageForShow.Draw(BaseMcvBox2DList[lbxTileList.SelectedIndex], new Bgr(Color.Yellow), 1);
                 drawWatchArea(
                     (int)BaseMcvBox2DList[lbxTileList.SelectedIndex].center.X,
@@ -452,9 +481,9 @@ namespace 磁磚辨識評分
                 drawThumbnailImage(
                     (int)(BaseMcvBox2DList[lbxTileList.SelectedIndex].center.X * ScaleOfThumbnail),
                     (int)(BaseMcvBox2DList[lbxTileList.SelectedIndex].center.Y * ScaleOfThumbnail));
-                #endregion
-            }
 
+                #endregion 標明選取的，重繪
+            }
         }
 
         private void btnDelTile_Click(object sender, EventArgs e)
@@ -486,10 +515,11 @@ namespace 磁磚辨識評分
             switch (WatchAreaMode)
             {
                 case WatchAreaModeNum.AddNewBox:
+
                     #region 新增新的磁磚
+
                     if (pointsOfAddingTile.Count < 4)
                     {
-
                         Point inputPoint = getMouseLocationRelayToBaseImage();
 
                         pointsOfAddingTile.Add(inputPoint);
@@ -497,6 +527,7 @@ namespace 磁磚辨識評分
                         if (pointsOfAddingTile.Count == 4)
                         {
                             #region 找到四邊型中心點
+
                             int CenterX = 0;
                             int CenterY = 0;
                             for (int index = 0; index < 4; index++)
@@ -505,9 +536,11 @@ namespace 磁磚辨識評分
                                 CenterY += pointsOfAddingTile[index].Y;
                             }
                             Point centerOfTile = new Point(CenterX / 4, CenterY / 4);
-                            #endregion
+
+                            #endregion 找到四邊型中心點
 
                             #region 區分出四個座標點分別會是四邊型的那個角落
+
                             Tile tempTile = new Tile();
                             for (int index = 0; index < 4; index++)
                             {
@@ -532,9 +565,11 @@ namespace 磁磚辨識評分
                                     tempTile.conerRD = pointsOfAddingTile[index];
                                 }
                             }
-                            #endregion
+
+                            #endregion 區分出四個座標點分別會是四邊型的那個角落
 
                             #region 產生MCvBox2D對應到使用者輸入的四個點
+
                             float height, width, angle;
                             height = (float)(
                                 myMath.GetDistance(tempTile.conerLT, tempTile.conerLD) +
@@ -547,9 +582,11 @@ namespace 磁磚辨識評分
                                 myMath.getAngle(tempTile.conerLD, tempTile.conerRD)) / 2;
 
                             MCvBox2D tempBox = new MCvBox2D((PointF)centerOfTile, new SizeF(width, height), angle);
-                            #endregion
+
+                            #endregion 產生MCvBox2D對應到使用者輸入的四個點
 
                             #region 將新的MCvBox2D丟到BaseMcv2DList，重建UI清單
+
                             BaseMcvBox2DList.Add(tempBox);
                             lbxTileList.Items.Add("newtile");
                             for (int index = 0; index < BaseMcvBox2DList.Count; index++)
@@ -558,81 +595,109 @@ namespace 磁磚辨識評分
                                 lbxTileList.Items[index] = boxNum;
                             }
                             pointsOfAddingTile.Clear();
-                            #endregion
+
+                            #endregion 將新的MCvBox2D丟到BaseMcv2DList，重建UI清單
 
                             #region 重繪
+
                             lbxTileList.SelectedIndex = lbxTileList.Items.Count - 1;
                             drawImageForShow();
                             ImageForShow.Draw(BaseMcvBox2DList[BaseMcvBox2DList.Count - 1], new Bgr(Color.Yellow), 1);
+
                             #region true
+
                             drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
                             drawThumbnailImage(CenterOfThumbnailWatchArea.X, CenterOfThumbnailWatchArea.Y);
-                            #endregion
+
+                            #endregion true
+
                             WatchAreaMode = WatchAreaModeNum.Browse;
-                            #endregion
+
+                            #endregion 重繪
 
                             btnDelTile.Enabled = true;
                             lblTileCount.Text = "總數：" + BaseMcvBox2DList.Count.ToString();
-
                         }
                     }
-                    #endregion
+
+                    #endregion 新增新的磁磚
+
                     break;
+
                 case WatchAreaModeNum.defWorkingspace:
+
                     #region 輸入工作區邊界
+
                     switch (WorkspaceType)
                     {
                         case Grid.SquareGrid:
+
                             #region 輸入正方形工作區邊界
+
                             if (WorkspaceLeftTop == Point.Empty)
                             {
                                 #region 如果左上點尚未建立，則輸入座標為左上點，提醒使用者輸入右下點
+
                                 WorkspaceLeftTop = getMouseLocationRelayToBaseImage();
                                 lblMsg.Text = "請點擊工作區右下角";
-                                #endregion
+
+                                #endregion 如果左上點尚未建立，則輸入座標為左上點，提醒使用者輸入右下點
                             }
                             else
                             {
                                 #region 輸入右下點
+
                                 WorkspaceRightDown = getMouseLocationRelayToBaseImage();
 
                                 #region 依據數學模型，將右下點輸入點修正到理論上的位置
+
                                 int xError = WorkspaceRightDown.X - WorkspaceLeftTop.X;
                                 int yError = WorkspaceRightDown.Y - WorkspaceLeftTop.X;
                                 double avgError = xError * 0.5 + yError * 0.5;
                                 WorkspaceRightDown = new Point(WorkspaceLeftTop.X + (int)avgError, WorkspaceLeftTop.Y + (int)avgError);
-                                #endregion
+
+                                #endregion 依據數學模型，將右下點輸入點修正到理論上的位置
 
                                 lblMsg.Text = "正方型工作區:" + WorkspaceLeftTop.ToString() + WorkspaceRightDown.ToString();
 
                                 #region 重新繪製底圖，出現網格
+
                                 drawImageForShow();
                                 drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
                                 drawThumbnailImage(CenterOfThumbnailWatchArea.X, CenterOfThumbnailWatchArea.Y);
-                                #endregion
+
+                                #endregion 重新繪製底圖，出現網格
 
                                 WatchAreaMode = WatchAreaModeNum.Browse;
 
-                                #endregion
+                                #endregion 輸入右下點
                             }
-                            #endregion
+
+                            #endregion 輸入正方形工作區邊界
+
                             break;
+
                         case Grid.RectangleGrid:
+
                             #region 輸入長方形工作區邊界
+
                             if (WorkspaceLeftTop == Point.Empty)
                             {
                                 #region 如果左上點尚未建立，則輸入座標為左上點，提醒使用者輸入右下點
+
                                 WorkspaceLeftTop = getMouseLocationRelayToBaseImage();
                                 lblMsg.Text = "請點擊工作區右下角";
-                                #endregion
+
+                                #endregion 如果左上點尚未建立，則輸入座標為左上點，提醒使用者輸入右下點
                             }
                             else
                             {
                                 #region 輸入右下點
+
                                 WorkspaceRightDown = getMouseLocationRelayToBaseImage();
 
-
                                 #region 依據數學模型，將右下點輸入點修正到理論上的位置
+
 #if false
                                 double hypotenuseInput = myMath.GetDistance(WorkspaceLeftTop, WorkspaceRightDown);
                                 WorkspaceRightDown = new Point(
@@ -643,29 +708,37 @@ namespace 磁磚辨識評分
                                 WorkspaceRightDown = new Point(
                                     (int)(RectangleGrids.Length / RectangleGrids.hypotenuse * hypotenuseInput) + WorkspaceLeftTop.X,
                                     (int)(RectangleGrids.Width / RectangleGrids.hypotenuse * hypotenuseInput) + WorkspaceLeftTop.Y);
-                                #endregion
 
+                                #endregion 依據數學模型，將右下點輸入點修正到理論上的位置
 
                                 lblMsg.Text = "長方形工作區:" + WorkspaceLeftTop.ToString() + WorkspaceRightDown.ToString();
 
                                 #region 重新繪製底圖，出現網格
+
                                 drawImageForShow();
                                 drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
                                 drawThumbnailImage(CenterOfThumbnailWatchArea.X, CenterOfThumbnailWatchArea.Y);
-                                #endregion
+
+                                #endregion 重新繪製底圖，出現網格
 
                                 WatchAreaMode = WatchAreaModeNum.Browse;
-                                #endregion
+
+                                #endregion 輸入右下點
                             }
-                            #endregion
+
+                            #endregion 輸入長方形工作區邊界
 
                             break;
+
                         default:
                             MessageBox.Show("未預期：沒有定義工作區類型卻執行定義工作區座標點");
                             break;
                     }
-                    #endregion
+
+                    #endregion 輸入工作區邊界
+
                     break;
+
                 default:
                     // MessageBox.Show("未預期：watchAreaMode未被定義，click事件被觸發");
                     break;
@@ -691,13 +764,15 @@ namespace 磁磚辨識評分
                 }
 
                 #region 繪製使用者雙擊的tile
+
                 lbxTileList.SelectedIndex = indexOfNerestTile;
                 drawImageForShow();
 
                 ImageForShow.Draw(BaseMcvBox2DList[indexOfNerestTile], new Bgr(Color.Yellow), 1);
                 drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
                 drawThumbnailImage(CenterOfThumbnailWatchArea.X, CenterOfThumbnailWatchArea.Y);
-                #endregion
+
+                #endregion 繪製使用者雙擊的tile
 
                 WatchAreaMode = WatchAreaModeNum.Browse;
             }
@@ -709,7 +784,6 @@ namespace 磁磚辨識評分
             IdentifyTileFile tempTileFile = new IdentifyTileFile();
             tempTileFile.BaseImage = BaseImage.Clone();
             tempTileFile.setBoxs(BaseMcvBox2DList);
-
 
             string filename = "";
             saveFileDialog1.FileName = Path.GetFileNameWithoutExtension(this.Text);
@@ -740,8 +814,15 @@ namespace 磁磚辨識評分
                 Stream output = File.Create(fileName);
                 formatter.Serialize(output, tempTileFileV2);
                 output.Close();
+                using (StreamWriter sw = new StreamWriter("BaseMcvBox2D.txt"))
+                {
+                    foreach (var box in BaseMcvBox2DList)
+                    {
+                        sw.WriteLine(box.center.X + "\t" + box.center.Y + "\t" + box.angle);
+                    }
+                    sw.Close();
+                }
             }
-
         }
 
         /// <summary>載入舊檔</summary>
@@ -761,7 +842,7 @@ namespace 磁磚辨識評分
             IdentifyTileFile tempTileFile = (IdentifyTileFile)formatter.Deserialize(input);
             input.Close();
 
-            LoadIDTiles(tempTileFile.BaseImage, tempTileFile.getMcvbox2DList(), fileName); 
+            LoadIDTiles(tempTileFile.BaseImage, tempTileFile.getMcvbox2DList(), fileName);
 #endif
             fileName = "";
 
@@ -790,8 +871,7 @@ namespace 磁磚辨識評分
                 Console.WriteLine("讀到舊版本");
                 lblFileEdition.Text = "舊版本";
             }
-            LoadIDTiles(tempTileFile.BaseImage, tempTileFile.getMcvbox2DList(), fileName); 
-
+            LoadIDTiles(tempTileFile.BaseImage, tempTileFile.getMcvbox2DList(), fileName);
         }
 
         /// <summary>依據給予的檔名，設定比例參數</summary>
@@ -827,7 +907,7 @@ namespace 磁磚辨識評分
                 }
                 else
                 {
-                    mySquareTiles = new SquareTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName,RankTopOnly);
+                    mySquareTiles = new SquareTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName, RankTopOnly);
                     if (mySquareTiles.msg == SquareTiles.error_TilePosition)
                     {
                         lblMsg.Text = "磁磚位置有誤，請檢查";
@@ -847,6 +927,7 @@ namespace 磁磚辨識評分
                         }
 
                         #region 印出磁磚
+
 #if false
                         using (StreamWriter sw = new StreamWriter("TilesLocation.txt"))
                         {
@@ -863,9 +944,10 @@ namespace 磁磚辨識評分
                             }
                             sw.Close();
                         }
-                        Process.Start("TilesLocation.txt"); 
+                        Process.Start("TilesLocation.txt");
 #endif
-                        #endregion
+
+                        #endregion 印出磁磚
                     }
                 }
             }
@@ -889,7 +971,7 @@ namespace 磁磚辨識評分
                 }
                 else
                 {
-                    myRetangleTiles = new RectangleTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName,RankTopOnly);
+                    myRetangleTiles = new RectangleTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName, RankTopOnly);
                     if (myRetangleTiles.msg == RectangleTiles.error_TilePosition)
                     {
                         lblMsg.Text = "磁磚位置有誤，請檢查";
@@ -911,7 +993,9 @@ namespace 磁磚辨識評分
                                 }
                             }
                         }
+
                         #region 印出磁磚
+
 #if false
                         using (StreamWriter sw = new StreamWriter("TilesLocation.txt"))
                         {
@@ -931,15 +1015,17 @@ namespace 磁磚辨識評分
                             }
                             sw.Close();
                         }
-                        Process.Start("TilesLocation.txt"); 
+                        Process.Start("TilesLocation.txt");
 #endif
-                        #endregion
+
+                        #endregion 印出磁磚
                     }
                 }
             }
         }
 
         #region 定義工作區按鈕
+
         private void btnDimSquareWorkingspace_Click(object sender, EventArgs e)
         {
             WatchAreaMode = WatchAreaModeNum.defWorkingspace;
@@ -957,11 +1043,13 @@ namespace 磁磚辨識評分
             WorkspaceRightDown = Point.Empty;
             WorkspaceType = Grid.RectangleGrid;
         }
-        #endregion
+
+        #endregion 定義工作區按鈕
 
         private void FormUserDef_Load(object sender, EventArgs e)
         {
             #region 載入比例參數
+
             if (File.Exists(@"Z:\實驗數據\磁磚照輸出\比例參數.txt"))
             {
                 LoadPixelPerCentimeter(@"Z:\實驗數據\磁磚照輸出\比例參數.txt");
@@ -976,8 +1064,8 @@ namespace 磁磚辨識評分
             {
                 MessageBox.Show("無可用的比例參數文件");
             }
-            #endregion
 
+            #endregion 載入比例參數
         }
 
         /// <summary>載入比例參數</summary>
@@ -1009,14 +1097,15 @@ namespace 磁磚辨識評分
         }
 
         #region 鍵盤事件
+
         private void FormUserDef_KeyDown(object sender, KeyEventArgs e)
         {
-
             switch (e.KeyCode)
             {
                 case Keys.Space:
                     spaceDown = true;
                     break;
+
                 case Keys.P:
                     if (lbxTileList.SelectedIndex != -1 && lbxTileList.SelectedIndex < lbxTileList.Items.Count - 1)
                     {
@@ -1024,6 +1113,7 @@ namespace 磁磚辨識評分
                     }
                     e.Handled = true;
                     break;
+
                 case Keys.I:
                     if (lbxTileList.SelectedIndex != -1 && lbxTileList.SelectedIndex > 0)
                     {
@@ -1031,6 +1121,7 @@ namespace 磁磚辨識評分
                     }
                     e.Handled = true;
                     break;
+
                 case Keys.O:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1040,10 +1131,10 @@ namespace 磁磚辨識評分
                         BaseMcvBox2DList[lbxTileList.SelectedIndex] = temp;
                         drawImageForShow();
                         drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
-
                     }
                     e.Handled = true;
                     break;
+
                 case Keys.L:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1053,7 +1144,6 @@ namespace 磁磚辨識評分
                         BaseMcvBox2DList[lbxTileList.SelectedIndex] = temp;
                         drawImageForShow();
                         drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
-
                     }
                     e.Handled = true;
                     break;
@@ -1067,11 +1157,11 @@ namespace 磁磚辨識評分
                         BaseMcvBox2DList[lbxTileList.SelectedIndex] = temp;
                         drawImageForShow();
                         drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
-
                     }
 
                     e.Handled = true;
                     break;
+
                 case Keys.OemSemicolon:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1081,7 +1171,6 @@ namespace 磁磚辨識評分
                         BaseMcvBox2DList[lbxTileList.SelectedIndex] = temp;
                         drawImageForShow();
                         drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
-
                     }
 
                     e.Handled = true;
@@ -1098,6 +1187,7 @@ namespace 磁磚辨識評分
                     }
                     e.Handled = true;
                     break;
+
                 case Keys.Down:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1109,6 +1199,7 @@ namespace 磁磚辨識評分
                     }
                     e.Handled = true;
                     break;
+
                 case Keys.Left:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1120,6 +1211,7 @@ namespace 磁磚辨識評分
                     }
                     e.Handled = true;
                     break;
+
                 case Keys.Right:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1131,6 +1223,7 @@ namespace 磁磚辨識評分
                     }
                     e.Handled = true;
                     break;
+
                 case Keys.PageUp:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1142,6 +1235,7 @@ namespace 磁磚辨識評分
                     }
                     e.Handled = true;
                     break;
+
                 case Keys.PageDown:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1153,6 +1247,7 @@ namespace 磁磚辨識評分
                     }
                     e.Handled = true;
                     break;
+
                 case Keys.Home:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1165,6 +1260,7 @@ namespace 磁磚辨識評分
                     }
                     e.Handled = true;
                     break;
+
                 case Keys.End:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1183,57 +1279,57 @@ namespace 磁磚辨識評分
                     {
                         tileEditTimeUpDate();
                         MCvBox2D temp = BaseMcvBox2DList[lbxTileList.SelectedIndex];
-                        temp.center.Y -= 1;
+                        temp.center.Y -= 0.2f;
                         BaseMcvBox2DList[lbxTileList.SelectedIndex] = temp;
                         drawImageForShow();
                         drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
-
                     }
                     e.Handled = true;
 
                     break;
+
                 case Keys.S:
                     if (lbxTileList.SelectedIndex != -1)
                     {
                         tileEditTimeUpDate();
                         MCvBox2D temp = BaseMcvBox2DList[lbxTileList.SelectedIndex];
-                        temp.center.Y += 1;
+                        temp.center.Y += 0.2f;
                         BaseMcvBox2DList[lbxTileList.SelectedIndex] = temp;
                         drawImageForShow();
                         drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
-
                     }
                     e.Handled = true;
 
                     break;
+
                 case Keys.A:
                     if (lbxTileList.SelectedIndex != -1)
                     {
                         tileEditTimeUpDate();
                         MCvBox2D temp = BaseMcvBox2DList[lbxTileList.SelectedIndex];
-                        temp.center.X -= 1;
+                        temp.center.X -= 0.2f;
                         BaseMcvBox2DList[lbxTileList.SelectedIndex] = temp;
                         drawImageForShow();
                         drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
-
                     }
                     e.Handled = true;
 
                     break;
+
                 case Keys.D:
                     if (lbxTileList.SelectedIndex != -1)
                     {
                         tileEditTimeUpDate();
                         MCvBox2D temp = BaseMcvBox2DList[lbxTileList.SelectedIndex];
-                        temp.center.X += 1;
+                        temp.center.X += 0.2f;
                         BaseMcvBox2DList[lbxTileList.SelectedIndex] = temp;
                         drawImageForShow();
                         drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
-
                     }
                     e.Handled = true;
 
                     break;
+
                 case Keys.Q:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1242,33 +1338,30 @@ namespace 磁磚辨識評分
 
                         temp.angle -= 0.02f;
 
-
-
                         BaseMcvBox2DList[lbxTileList.SelectedIndex] = temp;
                         drawImageForShow();
                         drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
-
                     }
                     e.Handled = true;
 
                     break;
+
                 case Keys.E:
                     if (lbxTileList.SelectedIndex != -1)
                     {
                         tileEditTimeUpDate();
                         MCvBox2D temp = BaseMcvBox2DList[lbxTileList.SelectedIndex];
 
-
                         temp.angle += 0.02f;
 
                         BaseMcvBox2DList[lbxTileList.SelectedIndex] = temp;
                         drawImageForShow();
                         drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
-
                     }
                     e.Handled = true;
 
                     break;
+
                 case Keys.X:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1277,14 +1370,13 @@ namespace 磁磚辨識評分
 
                         temp.angle = 0.00f;
 
-
                         BaseMcvBox2DList[lbxTileList.SelectedIndex] = temp;
                         drawImageForShow();
                         drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
-
                     }
                     e.Handled = true;
                     break;
+
                 case Keys.R:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1295,11 +1387,11 @@ namespace 磁磚辨識評分
                         BaseMcvBox2DList[lbxTileList.SelectedIndex] = temp;
                         drawImageForShow();
                         drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
-
                     }
                     e.Handled = true;
 
                     break;
+
                 case Keys.F:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1310,11 +1402,11 @@ namespace 磁磚辨識評分
                         BaseMcvBox2DList[lbxTileList.SelectedIndex] = temp;
                         drawImageForShow();
                         drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
-
                     }
                     e.Handled = true;
 
                     break;
+
                 case Keys.C:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1326,6 +1418,7 @@ namespace 磁磚辨識評分
                     }
                     e.Handled = true;
                     break;
+
                 case Keys.Z:
                     if (lbxTileList.SelectedIndex != -1)
                     {
@@ -1336,15 +1429,14 @@ namespace 磁磚辨識評分
                     }
                     e.Handled = true;
                     break;
+
                 default:
                     break;
-
             }
-
         }
 
         /// <summary>取得磁磚邊緣灰度</summary>
-        private double getTileEdgeGray(Tile tempTile)
+        private double getTileEdgeBrightness(Tile tempTile)
         {
             double gray = 0.0;
             foreach (PointF p in tempTile.TopEdge)
@@ -1365,13 +1457,13 @@ namespace 磁磚辨識評分
             }
             gray /= 80;
             return gray;
-
         }
 
         /// <summary>自動旋轉磁磚</summary>
         private void AutoTurnTile(int tileIndex)
         {
-            double GrayNow = getTileEdgeGray(new Tile(BaseMcvBox2DList[tileIndex]));
+#if false
+            double GrayNow = getTileEdgeBrightness(new Tile(BaseMcvBox2DList[tileIndex]));
             double ClockwiseMaxGray = GrayNow;
             double CounterclockwiseMaxGray = GrayNow;
             MCvBox2D tempClockwiseTile = BaseMcvBox2DList[tileIndex];
@@ -1379,7 +1471,7 @@ namespace 磁磚辨識評分
             while (true)
             {
                 tempClockwiseTile.angle += 0.01f;
-                double tempGray = getTileEdgeGray(new Tile(tempClockwiseTile));
+                double tempGray = getTileEdgeBrightness(new Tile(tempClockwiseTile));
                 if (tempGray > ClockwiseMaxGray)
                 {
                     ClockwiseMaxGray = tempGray;
@@ -1393,7 +1485,7 @@ namespace 磁磚辨識評分
             while (true)
             {
                 tempCounterclockwiseTile.angle -= 0.01f;
-                double tempGray = getTileEdgeGray(new Tile(tempCounterclockwiseTile));
+                double tempGray = getTileEdgeBrightness(new Tile(tempCounterclockwiseTile));
                 if (tempGray > CounterclockwiseMaxGray)
                 {
                     CounterclockwiseMaxGray = tempGray;
@@ -1411,12 +1503,81 @@ namespace 磁磚辨識評分
             else if (CounterclockwiseMaxGray > ClockwiseMaxGray && CounterclockwiseMaxGray > GrayNow)
             {
                 BaseMcvBox2DList[tileIndex] = tempCounterclockwiseTile;
+            } 
+#endif
+            Dictionary<MCvBox2D, double> shiftBoxAndBrightness = new Dictionary<MCvBox2D, double>();
+            MCvBox2D initialBox = BaseMcvBox2DList[tileIndex];
+            double initialBrightness = getTileEdgeBrightness(new Tile(initialBox));
+            shiftBoxAndBrightness.Add(initialBox, initialBrightness);
+            for (float rotate = -0.01f;rotate <= 0.01f; rotate+=0.02f)
+            {
+                MCvBox2D tempBox = initialBox;
+                double tempMaxBrightness = initialBrightness;
+                for (int step = 1;; step++)
+                {
+                    tempBox.angle += rotate * step;
+                    double tempBrightness = getTileEdgeBrightness(new Tile(tempBox));
+                    if (tempBrightness > tempMaxBrightness)
+                    {
+                        tempMaxBrightness = tempBrightness;
+                        shiftBoxAndBrightness.Add(tempBox, tempBrightness);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
             }
+            var max = shiftBoxAndBrightness.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
+            if (max.Equals(initialBox))
+            {
+                return;
+            }
+            BaseMcvBox2DList[tileIndex] = max;
         }
 
         /// <summary>自動微調磁磚位置</summary>
         private void AutoShiftTile(int tileIndex)
         {
+            while (true)
+            {
+                Dictionary<MCvBox2D, double> shiftAndBrightness = new Dictionary<MCvBox2D, double>();
+                double initialBrightness = getTileEdgeBrightness(new Tile(BaseMcvBox2DList[tileIndex]));
+                MCvBox2D initialbox = BaseMcvBox2DList[tileIndex];
+                shiftAndBrightness.Add(initialbox, initialBrightness);
+                PointF[] directSet = new PointF[] {
+                    new PointF(0, 0.2f),
+                    new PointF(0.2f, 0),
+                    new PointF(0, -0.2f),
+                    new PointF(-0.2f, 0),};
+                foreach (var direct in directSet)
+                {
+                    double tempMaxBrightness = initialBrightness;
+                    MCvBox2D tempBox = initialbox;
+                    for (int step = 1; ; step++)
+                    {
+                        tempBox.center.X += direct.X * step;
+                        tempBox.center.Y += direct.Y * step;
+                        double tempBrightness = getTileEdgeBrightness(new Tile(tempBox));
+                        if (tempBrightness > tempMaxBrightness)
+                        {
+                            tempMaxBrightness = tempBrightness;
+                            shiftAndBrightness.Add(tempBox, tempBrightness);
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+                MCvBox2D selectBox = shiftAndBrightness.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
+                if (selectBox.Equals(initialbox))
+                {
+                    break;
+                }
+                BaseMcvBox2DList[tileIndex] = selectBox;
+            }
+#if false
             while (true)
             {
                 double GrayNow = getTileEdgeGray(new Tile(BaseMcvBox2DList[tileIndex]));
@@ -1512,8 +1673,8 @@ namespace 磁磚辨識評分
                         MessageBox.Show("調整磁磚時發生未預期的狀況");
                     }
                 }
-
-            }
+            } 
+#endif
         }
 
         private void FormUserDef_KeyUp(object sender, KeyEventArgs e)
@@ -1523,6 +1684,7 @@ namespace 磁磚辨識評分
                 case Keys.Space:
                     spaceDown = false;
                     break;
+
                 default:
                     break;
             }
@@ -1530,8 +1692,6 @@ namespace 磁磚辨識評分
 
         private void tileEditTimeUpDate()
         {
-
-
             string title = lbxTileList.SelectedItem.ToString();
 
             char[] splitChar = { ' ' };
@@ -1540,11 +1700,12 @@ namespace 磁磚辨識評分
             //            lbxTileList.SelectedItem = title;
             lbxTileList.Items[lbxTileList.SelectedIndex] = title;
             lblEditMsg.Text = title;
-
         }
-        #endregion
+
+        #endregion 鍵盤事件
 
         #region 正規化磁磚
+
         private void btnSquareTileRegularize_Click(object sender, EventArgs e)
         {
             TileRegularize(TilesType.Square);
@@ -1554,6 +1715,7 @@ namespace 磁磚辨識評分
         {
             TileRegularize(TilesType.Rectangle);
         }
+
         /// <summary>正規化磁磚</summary>
         private void TileRegularize(TilesType theTilesType)
         {
@@ -1563,10 +1725,12 @@ namespace 磁磚辨識評分
                 case TilesType.Square:
                     tempSize = new SizeF((float)(SquareGrids.tileLength * (double)nudPixelPerCentimeter.Value), (float)(SquareGrids.tileLength * (double)nudPixelPerCentimeter.Value));
                     break;
+
                 case TilesType.Rectangle:
                     tempSize = new SizeF((float)((RectangleGrids.tileLength + (double)nudRectangularTileAdj.Value) * (double)nudPixelPerCentimeter.Value),
                         (float)(RectangleGrids.tileWidth * (double)nudPixelPerCentimeter.Value));
                     break;
+
                 default:
                     tempSize = new SizeF(0, 0);
                     break;
@@ -1576,15 +1740,14 @@ namespace 磁磚辨識評分
                 MCvBox2D tempBox = BaseMcvBox2DList[index];
                 tempBox.size = tempSize;
                 BaseMcvBox2DList[index] = tempBox;
-
             }
 
             drawImageForShow();
             drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
             drawThumbnailImage(CenterOfThumbnailWatchArea.X, CenterOfThumbnailWatchArea.Y);
-
         }
-        #endregion
+
+        #endregion 正規化磁磚
 
         private void ckbShowWeb_CheckedChanged(object sender, EventArgs e)
         {
@@ -1614,6 +1777,8 @@ namespace 磁磚辨識評分
                 AutoTurnTile(i);
                 AutoShiftTile(i);
                 AutoTurnTile(i);
+                AutoShiftTile(i);
+                AutoTurnTile(i);
                 temp = BaseMcvBox2DList[i];
                 temp.size.Width += 1;
                 temp.size.Height += 1;
@@ -1626,14 +1791,11 @@ namespace 磁磚辨識評分
         private void ckbRankTopOnly_CheckedChanged(object sender, EventArgs e)
         {
             RankTopOnly = ckbRankTopOnly.Checked;
-            
         }
-
-
-
     }
 
     #region 程式狀態變數_WatchArea_class
+
     //picboxWatchArea可能要看操作mode來決定要輸出什麼資料或是觸發什麼方法
     //這裡保管mode字典
     /// <summary>
@@ -1658,12 +1820,6 @@ namespace 磁磚辨識評分
         /// </summary>
         public const int defWorkingspace = 3;
     }
-    #endregion
 
-
-
-
-
-
-
+    #endregion 程式狀態變數_WatchArea_class
 }

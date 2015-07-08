@@ -65,7 +65,7 @@
     <ManifestKeyFile>ShapeDetection_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <GenerateManifests>true</GenerateManifests>
+    <GenerateManifests>false</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
     <SignManifests>false</SignManifests>
@@ -140,9 +140,13 @@
       <DependentUpon>SampleGen.cs</DependentUpon>
     </Compile>
     <Compile Include="工具class\ExtensionMethods.cs" />
+    <Compile Include="工具class\FolderSelectDialog.cs" />
+    <Compile Include="工具class\GaussianRandom.cs" />
+    <Compile Include="工具class\LoadFileTool.cs" />
     <Compile Include="工具class\myMath.cs" />
     <Compile Include="工具class\myStatistics.cs" />
     <Compile Include="工具class\myTool.cs" />
+    <Compile Include="工具class\Reflector.cs" />
     <Compile Include="工具class\report.cs" />
     <Compile Include="資料結構\Enumeration.cs" />
     <Compile Include="資料結構\Grid.cs" />

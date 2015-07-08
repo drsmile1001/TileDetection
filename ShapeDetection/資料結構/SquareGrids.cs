@@ -10,9 +10,6 @@ class SquareGrids
     public const int rowCount = 12;
     public const int rowCountHalf = 6;
     public const int columnCount = 12;
-
-    
-
     
     /// <summary>正方形網格的斜邊長度(mm)</summary>
     public const double hypotenuse = 848.5281374;
@@ -39,17 +36,16 @@ class SquareGrids
     }
 
     /// <summary>網格左上角</summary>
-    private Point GridsLT;
-    public Point get_GridsLT
-    {
-        get { return GridsLT; }
-    }
+    public Point GridsLT{get; private set;}
+    
     /// <summary>網格右下角</summary>
-    private Point GridsRD;
-    public Point get_GridsRd
-    {
-        get { return GridsRD; }
-    }
+    public Point GridsRD{get; private set;}
+    
+    /// <summary>網格寬</summary>
+    public double WidthInPixel { get { return Math.Abs(GridsRD.X - GridsLT.X); } }
+
+    /// <summary>網格高</summary>
+    public double HeightInPixel { get { return Math.Abs(GridsRD.Y - GridsLT.Y); } }
 
     private double mmPerPixel;
     /// <summary>依照網格，轉換長度(pixel->mm)</summary>

@@ -30,6 +30,9 @@
         {
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.btnBatchScore = new System.Windows.Forms.Button();
+            this.btnBatchProcess = new System.Windows.Forms.Button();
+            this.ckbRankTopOnly = new System.Windows.Forms.CheckBox();
             this.button1 = new System.Windows.Forms.Button();
             this.ckbDrawTexture = new System.Windows.Forms.CheckBox();
             this.btnReDraw = new System.Windows.Forms.Button();
@@ -81,7 +84,8 @@
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.ckbRankTopOnly = new System.Windows.Forms.CheckBox();
+            this.SFD = new System.Windows.Forms.SaveFileDialog();
+            this.ckbCanny = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -121,6 +125,9 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.ckbCanny);
+            this.splitContainer1.Panel2.Controls.Add(this.btnBatchScore);
+            this.splitContainer1.Panel2.Controls.Add(this.btnBatchProcess);
             this.splitContainer1.Panel2.Controls.Add(this.ckbRankTopOnly);
             this.splitContainer1.Panel2.Controls.Add(this.button1);
             this.splitContainer1.Panel2.Controls.Add(this.ckbDrawTexture);
@@ -154,8 +161,8 @@
             this.splitContainer1.Panel2.Controls.Add(this.nudCoulumnDis);
             this.splitContainer1.Panel2.Controls.Add(this.btnSaveSample);
             this.splitContainer1.Panel2.Controls.Add(this.btnGen);
-            this.splitContainer1.Size = new System.Drawing.Size(999, 590);
-            this.splitContainer1.SplitterDistance = 811;
+            this.splitContainer1.Size = new System.Drawing.Size(1003, 657);
+            this.splitContainer1.SplitterDistance = 815;
             this.splitContainer1.TabIndex = 0;
             // 
             // pictureBox1
@@ -163,14 +170,47 @@
             this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureBox1.Location = new System.Drawing.Point(0, 0);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(811, 590);
+            this.pictureBox1.Size = new System.Drawing.Size(815, 657);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             // 
+            // btnBatchScore
+            // 
+            this.btnBatchScore.Location = new System.Drawing.Point(8, 598);
+            this.btnBatchScore.Name = "btnBatchScore";
+            this.btnBatchScore.Size = new System.Drawing.Size(163, 23);
+            this.btnBatchScore.TabIndex = 33;
+            this.btnBatchScore.Text = "批次評分";
+            this.btnBatchScore.UseVisualStyleBackColor = true;
+            this.btnBatchScore.Click += new System.EventHandler(this.btnBatchScore_Click);
+            // 
+            // btnBatchProcess
+            // 
+            this.btnBatchProcess.Location = new System.Drawing.Point(8, 569);
+            this.btnBatchProcess.Name = "btnBatchProcess";
+            this.btnBatchProcess.Size = new System.Drawing.Size(163, 23);
+            this.btnBatchProcess.TabIndex = 32;
+            this.btnBatchProcess.Text = "照片To電腦繪製";
+            this.btnBatchProcess.UseVisualStyleBackColor = true;
+            this.btnBatchProcess.Click += new System.EventHandler(this.btnBatchProcess_Click);
+            // 
+            // ckbRankTopOnly
+            // 
+            this.ckbRankTopOnly.AutoSize = true;
+            this.ckbRankTopOnly.Checked = true;
+            this.ckbRankTopOnly.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.ckbRankTopOnly.Location = new System.Drawing.Point(96, 9);
+            this.ckbRankTopOnly.Name = "ckbRankTopOnly";
+            this.ckbRankTopOnly.Size = new System.Drawing.Size(84, 16);
+            this.ckbRankTopOnly.TabIndex = 31;
+            this.ckbRankTopOnly.Text = "只評分上半";
+            this.ckbRankTopOnly.UseVisualStyleBackColor = true;
+            this.ckbRankTopOnly.CheckedChanged += new System.EventHandler(this.ckbRankTopOnly_CheckedChanged);
+            // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(114, 252);
+            this.button1.Location = new System.Drawing.Point(104, 230);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 30;
@@ -449,12 +489,12 @@
             // 
             // nudTileAngleErr
             // 
-            this.nudTileAngleErr.DecimalPlaces = 1;
+            this.nudTileAngleErr.DecimalPlaces = 2;
             this.nudTileAngleErr.Increment = new decimal(new int[] {
             1,
             0,
             0,
-            65536});
+            131072});
             this.nudTileAngleErr.Location = new System.Drawing.Point(113, 33);
             this.nudTileAngleErr.Maximum = new decimal(new int[] {
             5,
@@ -514,12 +554,12 @@
             // 
             // nudTileDisY
             // 
-            this.nudTileDisY.DecimalPlaces = 1;
+            this.nudTileDisY.DecimalPlaces = 2;
             this.nudTileDisY.Increment = new decimal(new int[] {
             1,
             0,
             0,
-            65536});
+            131072});
             this.nudTileDisY.Location = new System.Drawing.Point(37, 265);
             this.nudTileDisY.Maximum = new decimal(new int[] {
             10,
@@ -537,12 +577,12 @@
             // 
             // nudTileDisX
             // 
-            this.nudTileDisX.DecimalPlaces = 1;
+            this.nudTileDisX.DecimalPlaces = 2;
             this.nudTileDisX.Increment = new decimal(new int[] {
             1,
             0,
             0,
-            65536});
+            131072});
             this.nudTileDisX.Location = new System.Drawing.Point(37, 239);
             this.nudTileDisX.Maximum = new decimal(new int[] {
             10,
@@ -614,12 +654,12 @@
             // 
             // nudRowAngleErr
             // 
-            this.nudRowAngleErr.DecimalPlaces = 1;
+            this.nudRowAngleErr.DecimalPlaces = 2;
             this.nudRowAngleErr.Increment = new decimal(new int[] {
             1,
             0,
             0,
-            65536});
+            131072});
             this.nudRowAngleErr.Location = new System.Drawing.Point(88, 179);
             this.nudRowAngleErr.Maximum = new decimal(new int[] {
             5,
@@ -630,10 +670,10 @@
             this.nudRowAngleErr.Size = new System.Drawing.Size(45, 22);
             this.nudRowAngleErr.TabIndex = 7;
             this.nudRowAngleErr.Value = new decimal(new int[] {
-            3,
+            5,
             0,
             0,
-            65536});
+            131072});
             // 
             // nudRowAngle
             // 
@@ -660,12 +700,12 @@
             // 
             // nudCoulumnAngleErr
             // 
-            this.nudCoulumnAngleErr.DecimalPlaces = 1;
+            this.nudCoulumnAngleErr.DecimalPlaces = 2;
             this.nudCoulumnAngleErr.Increment = new decimal(new int[] {
             1,
             0,
             0,
-            65536});
+            131072});
             this.nudCoulumnAngleErr.Location = new System.Drawing.Point(88, 153);
             this.nudCoulumnAngleErr.Maximum = new decimal(new int[] {
             5,
@@ -676,10 +716,10 @@
             this.nudCoulumnAngleErr.Size = new System.Drawing.Size(45, 22);
             this.nudCoulumnAngleErr.TabIndex = 9;
             this.nudCoulumnAngleErr.Value = new decimal(new int[] {
-            3,
+            5,
             0,
             0,
-            65536});
+            131072});
             // 
             // nudCoulumnAngle
             // 
@@ -751,12 +791,12 @@
             // 
             // nudRowErr
             // 
-            this.nudRowErr.DecimalPlaces = 1;
+            this.nudRowErr.DecimalPlaces = 2;
             this.nudRowErr.Increment = new decimal(new int[] {
             1,
             0,
             0,
-            65536});
+            131072});
             this.nudRowErr.Location = new System.Drawing.Point(88, 76);
             this.nudRowErr.Maximum = new decimal(new int[] {
             10,
@@ -797,12 +837,12 @@
             // 
             // nudCoulumnErr
             // 
-            this.nudCoulumnErr.DecimalPlaces = 1;
+            this.nudCoulumnErr.DecimalPlaces = 2;
             this.nudCoulumnErr.Increment = new decimal(new int[] {
             1,
             0,
             0,
-            65536});
+            131072});
             this.nudCoulumnErr.Location = new System.Drawing.Point(88, 50);
             this.nudCoulumnErr.Maximum = new decimal(new int[] {
             10,
@@ -869,9 +909,9 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 568);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 635);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(999, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(1003, 22);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -880,24 +920,21 @@
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
             this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 17);
             // 
-            // ckbRankTopOnly
+            // ckbCanny
             // 
-            this.ckbRankTopOnly.AutoSize = true;
-            this.ckbRankTopOnly.Checked = true;
-            this.ckbRankTopOnly.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.ckbRankTopOnly.Location = new System.Drawing.Point(96, 9);
-            this.ckbRankTopOnly.Name = "ckbRankTopOnly";
-            this.ckbRankTopOnly.Size = new System.Drawing.Size(84, 16);
-            this.ckbRankTopOnly.TabIndex = 31;
-            this.ckbRankTopOnly.Text = "只評分上半";
-            this.ckbRankTopOnly.UseVisualStyleBackColor = true;
-            this.ckbRankTopOnly.CheckedChanged += new System.EventHandler(this.ckbRankTopOnly_CheckedChanged);
+            this.ckbCanny.AutoSize = true;
+            this.ckbCanny.Location = new System.Drawing.Point(120, 271);
+            this.ckbCanny.Name = "ckbCanny";
+            this.ckbCanny.Size = new System.Drawing.Size(52, 16);
+            this.ckbCanny.TabIndex = 34;
+            this.ckbCanny.Text = "canny";
+            this.ckbCanny.UseVisualStyleBackColor = true;
             // 
             // SampleGen
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(999, 590);
+            this.ClientSize = new System.Drawing.Size(1003, 657);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.splitContainer1);
             this.Name = "SampleGen";
@@ -992,5 +1029,9 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.CheckBox ckbRankTopOnly;
+        private System.Windows.Forms.Button btnBatchProcess;
+        private System.Windows.Forms.Button btnBatchScore;
+        private System.Windows.Forms.SaveFileDialog SFD;
+        private System.Windows.Forms.CheckBox ckbCanny;
     }
 }

@@ -95,18 +95,17 @@ class RectangleGrids
     }
 
     /// <summary>網格左上角</summary>
-    private Point GridsLT;
-    public Point get_GridsLT
-    {
-        get { return GridsLT; }
-    }
-
+    public Point GridsLT { get; private set; }
+    
     /// <summary>網格右下角</summary>
-    private Point GridsRD;
-    public Point get_GridsRD
-    {
-        get { return GridsRD; }
-    }
+    public Point GridsRD { get; private set; }
+
+    /// <summary>網格寬</summary>
+    public double WidthInPixel { get { return Math.Abs(GridsRD.X - GridsLT.X); } }
+
+    /// <summary>網格高</summary>
+    public double HeightInPixel { get { return Math.Abs(GridsRD.Y - GridsLT.Y); } }
+    
 
 
     private double mmPerPixel;

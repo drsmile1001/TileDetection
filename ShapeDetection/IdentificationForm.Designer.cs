@@ -51,14 +51,17 @@ namespace ºÏ¿j¿ëÃÑµû¤À
             this.OrgPlusCatchBox = new Emgu.CV.UI.ImageBox();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarThresholding)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
             this.splitContainer2.Panel1.SuspendLayout();
             this.splitContainer2.Panel2.SuspendLayout();
             this.splitContainer2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.originalImageBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.BinImageBox)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).BeginInit();
             this.splitContainer3.Panel1.SuspendLayout();
             this.splitContainer3.Panel2.SuspendLayout();
             this.splitContainer3.SuspendLayout();
@@ -93,6 +96,7 @@ namespace ºÏ¿j¿ëÃÑµû¤À
             this.button1.TabIndex = 11;
             this.button1.Text = "button1";
             this.button1.UseVisualStyleBackColor = true;
+            this.button1.Visible = false;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // btnSave
@@ -124,6 +128,7 @@ namespace ºÏ¿j¿ëÃÑµû¤À
             this.btnFindBest.TabIndex = 7;
             this.btnFindBest.Text = "btnFindBest";
             this.btnFindBest.UseVisualStyleBackColor = true;
+            this.btnFindBest.Visible = false;
             this.btnFindBest.Click += new System.EventHandler(this.btnFindBest_Click);
             // 
             // lblBoxFind
@@ -309,14 +314,17 @@ namespace ºÏ¿j¿ëÃÑµû¤À
             ((System.ComponentModel.ISupportInitialize)(this.trackBarThresholding)).EndInit();
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
             this.splitContainer2.Panel1.ResumeLayout(false);
             this.splitContainer2.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
             this.splitContainer2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.originalImageBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.BinImageBox)).EndInit();
             this.splitContainer3.Panel1.ResumeLayout(false);
             this.splitContainer3.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).EndInit();
             this.splitContainer3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.CatchImageBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.OrgPlusCatchBox)).EndInit();

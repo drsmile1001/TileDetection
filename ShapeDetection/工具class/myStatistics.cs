@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Drawing;
 
 public static class myStatistics
 {
@@ -20,6 +21,21 @@ public static class myStatistics
         public TrendLine(double[] inputXData, double[] inputYData)
         {
             getTrendLineEquation(inputXData, inputYData);
+            TrendLineAngle = Math.Atan(TrendLineEquationCoefficients[1]) * 180 / Math.PI;
+        }
+
+        /// <summary>建構趨勢線，需要避免輸入垂直線</summary>
+        /// <param name="inputXData">自變數</param>
+        /// <param name="inputYData">依變數</param>
+        public TrendLine(IEnumerable<PointF> sourcePointF,bool swapXY = false)
+        {
+            var xData = sourcePointF.Select(p => (double)p.X).ToArray();
+            var yData = sourcePointF.Select(p => (double)p.Y).ToArray();
+            if (swapXY)
+            {
+                myTool.Swap(ref xData, ref yData);
+            }
+            getTrendLineEquation(xData, yData);
             TrendLineAngle = Math.Atan(TrendLineEquationCoefficients[1]) * 180 / Math.PI;
         }
 

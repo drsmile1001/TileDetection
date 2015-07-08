@@ -6,6 +6,7 @@ using Emgu.CV;
 using Emgu.CV.Structure;
 using System.Drawing;
 
+
 static class ExtensionMethods
 {
     public static Color GetColor(this Image<Bgr, Byte> image, int x, int y)
@@ -14,7 +15,7 @@ static class ExtensionMethods
         {
             return Color.FromArgb(image.Data[x, y, 2], image.Data[x, y, 1], image.Data[x, y, 0]);
         }
-        catch 
+        catch
         {
 
             return Color.Black;
@@ -75,4 +76,5 @@ static class ExtensionMethods
 
 
 }
+
 

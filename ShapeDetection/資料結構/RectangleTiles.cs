@@ -1,71 +1,37 @@
-﻿using System;
+﻿using Emgu.CV.Structure;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Drawing;
-using Emgu.CV.Structure;
+using System.Linq;
 
-class RectangleTiles
+internal class RectangleTiles
 {
-    /// <summary>代表整組磁磚</summary>
-    public MCvBox2D[,] Tiles;
-
     /// <summary>錯誤訊息</summary>
     public int msg;
 
     public RectangleGrids myGrid;
 
+    /// <summary>代表整組磁磚</summary>
+    public MCvBox2D[,] Tiles;
 
-
-    public RectangleTiles(Point theGridRD, Point theGridLT, List<MCvBox2D> BaseMcvBox2DList, string fileName,bool rankTopOnly)
+    public RectangleTiles(Point theGridRD, Point theGridLT, List<MCvBox2D> BaseMcvBox2DList, string fileName, bool rankTopOnly)
     {
         myGrid = new RectangleGrids(theGridRD, theGridLT);
-        Tiles = new MCvBox2D[RectangleGrids.columnCount, RectangleGrids.rowCount];
-
-        bool[,] PositionOccupied = new bool[RectangleGrids.columnCount, RectangleGrids.rowCount];
-        for (int columnIndex = 0; columnIndex < RectangleGrids.columnCount; columnIndex++)
-        {
-            for (int rowIndex = 0; rowIndex < RectangleGrids.rowCount; rowIndex++)
-            {
-                PositionOccupied[columnIndex, rowIndex] = false;
-            }
-        }
-
-        #region 定位磁磚
-        double halfHorizontalSpacing = myGrid.get_GridSpacingHorizontalInPixel / 2;
-
-        for (int index = 0; index < BaseMcvBox2DList.Count; index++)
-        {
-            int columnOfBox = (int)Math.Round((BaseMcvBox2DList[index].center.X - myGrid.get_GridsLT.X) / halfHorizontalSpacing) - 1;
-
-            int rowOfBox = (int)((BaseMcvBox2DList[index].center.Y - myGrid.get_GridsLT.Y) / myGrid.get_GridSpacingVerticalInPixel);
-
-            if (PositionOccupied[columnOfBox, rowOfBox] == false)
-            {
-                Tiles[columnOfBox, rowOfBox] = BaseMcvBox2DList[index];
-                PositionOccupied[columnOfBox, rowOfBox] = true;
-            }
-            else
-            {
-                Console.WriteLine("tile" + index + "位置與其他tile重複");
-                msg = error_TilePosition;
-            }
-        }
-        #endregion
+        Tiles = RectangleTiles.TileArrayToTile2DArray(theGridRD, theGridLT, BaseMcvBox2DList);
 
         //評分
-        rankRectangleTiles(fileName, Tiles, myGrid,rankTopOnly);
-        
-
+        rankRectangleTiles(fileName, Tiles, myGrid, rankTopOnly);
     }
 
-    public static string rankRectangleTiles(string fileName, MCvBox2D[,] Tiles, RectangleGrids myGrid,bool rankTopOnly)
+    public static string rankRectangleTiles(string fileName, MCvBox2D[,] Tiles, RectangleGrids myGrid, bool rankTopOnly)
     {
         #region 評分
 
         report myReport = new report(fileName);
         int rowCount = rankTopOnly ? RectangleGrids.rowCountHalf : RectangleGrids.rowCount;
+
         #region 評分_絕對位置
+
         myReport.newLine("絕對位置：");
         double absoluteError = 0.0;
         for (int row = 0; row < rowCount; row++)
@@ -89,81 +55,108 @@ class RectangleTiles
                 {
                     rowReport += "\t";
                 }
-
             }
             myReport.newLine(rowReport);
         }
         myReport.newLine("絕對位置總誤差：\t" + absoluteError);
 
-        #endregion
+        #endregion 評分_絕對位置
 
         #region 評分_溝縫
+
         myReport.newLine("");
         myReport.newLine("溝縫間隔：");
+
+        List<double> gap = new List<double>();
+
         #region 列與列間溝縫
+
         myReport.newLine("列與列間溝縫：");
         List<double> allRowError = new List<double>();
         double helfTileWidth = myGrid.PixelFormMm(RectangleGrids.tileWidth) / 2;
-        
+
         #region 考慮第0條至第6條(共7條)水平溝縫，將溝縫視為上鄰接列的附屬，所以最後一列沒有溝縫
-        for (int rowNum = 0; rowNum < rowCount -1; rowNum++)
+
+        for (int rowNum = 0; rowNum < rowCount - 1; rowNum++)
         {
             string rowReport = "第" + rowNum.ToString("D2") + "條：";
             List<double> rowError = new List<double>();
 
             #region 依序考慮每一行磁磚要計算的溝縫
+
             for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
             {
                 #region 對照行列，只計算"存在"磁磚位置
+
                 if ((columnNum + rowNum) % 2 == 0)
                 {
                     #region 只看奇數列中有存在的磁磚
 
                     #region 如果相對於本磁磚的左下磁磚存在的話
+
                     if (columnNum - 1 >= 0)
                     {
                         #region 溝縫差加上：左下磁磚中心點與上邊交點 與 本磁磚左下點 的y方向差
+
                         double disA = myGrid.mmFormPixel(myMath.GetDis<double>(
                                 Tiles[columnNum - 1, rowNum + 1].center.Y - helfTileWidth
                                     - new Tile(Tiles[columnNum, rowNum]).conerLD.Y));
                         rowError.Add(disA);
                         allRowError.Add(disA);
-                        #endregion
+                        gap.Add(disA);
+
+                        #endregion 溝縫差加上：左下磁磚中心點與上邊交點 與 本磁磚左下點 的y方向差
+
                         #region 溝縫差加上：左下磁磚右上點 與 本磁磚中心點與下邊交點 的y方向差
+
                         double disB = myGrid.mmFormPixel(myMath.GetDis<double>(
                                 new Tile(Tiles[columnNum - 1, rowNum + 1]).conerRT.Y - helfTileWidth
                                     - Tiles[columnNum, rowNum].center.Y));
                         rowError.Add(disB);
                         allRowError.Add(disB);
-                        #endregion
+                        gap.Add(disB);
+
+                        #endregion 溝縫差加上：左下磁磚右上點 與 本磁磚中心點與下邊交點 的y方向差
                     }
-                    #endregion
+
+                    #endregion 如果相對於本磁磚的左下磁磚存在的話
 
                     #region 如果相對於本磁磚的右下磁磚存在的話
+
                     if (columnNum + 1 < RectangleGrids.columnCount)
                     {
                         #region 溝縫差加上：右下磁磚左上點 與 本磁磚中心點與下邊交點 的y方向差
+
                         double disC = myGrid.mmFormPixel(myMath.GetDis<double>(
                                 new Tile(Tiles[columnNum + 1, rowNum + 1]).conerLT.Y - helfTileWidth
                                     - Tiles[columnNum, rowNum].center.Y));
                         rowError.Add(disC);
                         allRowError.Add(disC);
-                        #endregion
+                        gap.Add(disC);
+
+                        #endregion 溝縫差加上：右下磁磚左上點 與 本磁磚中心點與下邊交點 的y方向差
 
                         #region 溝縫差加上：右下磁磚中心點與上邊交點 與 本磁磚右下點 的y方向差
+
                         double disD = myGrid.mmFormPixel(myMath.GetDis<double>(
                                 Tiles[columnNum + 1, rowNum + 1].center.Y - helfTileWidth
                                     - new Tile(Tiles[columnNum, rowNum]).conerRD.Y));
                         rowError.Add(disD);
                         allRowError.Add(disD);
-                        #endregion
+                        gap.Add(disD);
+
+                        #endregion 溝縫差加上：右下磁磚中心點與上邊交點 與 本磁磚右下點 的y方向差
                     }
-                    #endregion
-                    #endregion
+
+                    #endregion 如果相對於本磁磚的右下磁磚存在的話
+
+                    #endregion 只看奇數列中有存在的磁磚
                 }
-                #endregion
+
+                #endregion 對照行列，只計算"存在"磁磚位置
             }
-            #endregion
+
+            #endregion 依序考慮每一行磁磚要計算的溝縫
 
             foreach (double err in rowError)
             {
@@ -174,10 +167,12 @@ class RectangleTiles
         }
         myReport.GapHSD = allRowError.ToArray().StandardDeviation();
 
-        #endregion
-        #endregion
+        #endregion 考慮第0條至第6條(共7條)水平溝縫，將溝縫視為上鄰接列的附屬，所以最後一列沒有溝縫
+
+        #endregion 列與列間溝縫
 
         #region 行與行間溝縫
+
         myReport.newLine("行與行間溝縫：");
         List<double> allColumnError = new List<double>();
         for (int columnNum = 0; columnNum < RectangleGrids.gapCountInColumn; columnNum++)
@@ -199,22 +194,45 @@ class RectangleTiles
 
                     allColumnError.Add(disA);
                     allColumnError.Add(disB);
+                    gap.Add(disA);
+                    gap.Add(disB);
                 }
             }
             columnReport += "\t平均：\t" + columnError.Average() + "\t標準差\t" + columnError.StandardDeviation();
             myReport.newLine(columnReport);
         }
         myReport.GapVSD = allColumnError.ToArray().StandardDeviation();
-        #endregion
 
+        #endregion 行與行間溝縫
 
+        #region 不分方向評分
 
-        #endregion
+        double gapSD = gap.ToArray().StandardDeviation();
+        double gapAvg = gap.Average();
+        double gapMax = gap.Max();
+        double gapMin = gap.Min();
+        double gapRange = gapMax - gapMin;
+        double gapRangeAvgRatio = gapRange / gapAvg;
+        myReport.newLine("勾縫標準差:/t" + gapSD);
+        myReport.GapSD = gapSD;
+        myReport.newLine("勾縫極差:/t" + gapRange);
+        myReport.GapRange = gapRange;
+        myReport.newLine("平均勾縫寬:/t" + gapAvg);
+        myReport.GapAvg = gapAvg;
+        myReport.newLine("極差平均比/t" + gapAvg);
+        myReport.GapRangeAvgRatio = gapRangeAvgRatio;
+
+        #endregion 不分方向評分
+
+        #endregion 評分_溝縫
 
         #region 評分_磁磚角趨勢線
+
         myReport.newLine("");
         myReport.newLine("磁磚角趨勢線");
+
         #region 水平趨勢線
+
         myReport.newLine("水平趨勢線");
         for (int rowNum = 0; rowNum < rowCount; rowNum++)
         {
@@ -245,8 +263,6 @@ class RectangleTiles
                 tempDownYs[columnNum * 2] = tempTile.conerLD.Y * -1;
                 tempDownYs[columnNum * 2 + 1] = tempTile.conerRD.Y * -1;
                 HorizontalTrendLineDownY += "\t" + tempTile.conerLD.Y + "\t" + tempTile.conerRD.Y;
-
-
             }
             myStatistics.TrendLine TrendLineTop = new myStatistics.TrendLine(tempTopXs, tempTopYs);
             myReport.newLine("第" + rowNum.ToString("D2") + "列上：");
@@ -261,9 +277,10 @@ class RectangleTiles
             myReport.newLine("Ydata:\t" + HorizontalTrendLineDownY);
         }
 
-        #endregion
+        #endregion 水平趨勢線
 
         #region 垂直趨勢線
+
         myReport.newLine("垂直趨勢線");
         for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
         {
@@ -277,7 +294,7 @@ class RectangleTiles
             string VerticalTrendLineRightX = "";
             string VerticalTrendLineRightY = "";
 
-            for (int rowNum = 0; rowNum < rowCount / 2 ; rowNum++)
+            for (int rowNum = 0; rowNum < rowCount / 2; rowNum++)
             {
                 Tile tempTile = new Tile(Tiles[columnNum, rowNum * 2 + (columnNum % 2)]);
 
@@ -308,16 +325,19 @@ class RectangleTiles
             myReport.newLine("Ydata:\t" + VerticalTrendLineRightY);
         }
 
-        #endregion
+        #endregion 垂直趨勢線
 
-        #endregion
+        #endregion 評分_磁磚角趨勢線
 
         #region 評分_磁磚中心趨勢線
+
         myReport.newLine("");
         myReport.newLine("磁磚中心趨勢線");
+
         #region 水平趨勢線
+
         myReport.newLine("水平趨勢線");
-        List<double> HorizontalTrendLineaAngle = new List<double>();
+        List<double> HorizontalTrendLineAngle = new List<double>();
         for (int rowNum = 0; rowNum < rowCount; rowNum++)
         {
             double[] Xdata = new double[RectangleGrids.ColumnCountInRow(rowNum)];
@@ -336,22 +356,24 @@ class RectangleTiles
             double angle = TrendLine.Angle();
             myReport.newLine("第" + rowNum.ToString("D2") + "列：");
             myReport.newLine("角度(度數)：\t" + TrendLine.Angle());
-            HorizontalTrendLineaAngle.Add(angle);
+            HorizontalTrendLineAngle.Add(angle);
+
             myReport.newLine("Xdata:\t" + HorizontalTrendLineX);
             myReport.newLine("Ydata:\t" + HorizontalTrendLineY);
         }
-        double rowAngleSD = HorizontalTrendLineaAngle.ToArray().StandardDeviation();
+        double rowAngleSD = HorizontalTrendLineAngle.ToArray().StandardDeviation();
         myReport.RowAngleSD = rowAngleSD;
         myReport.newLine("水平趨勢線夾角標準差" + rowAngleSD);
 
-        #endregion
+        #endregion 水平趨勢線
 
         #region 垂直趨勢線
+
         myReport.newLine("垂直趨勢線");
         List<double> VerticalTrendLineAngle = new List<double>();
         for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
         {
-            double[] Xdata = new double[rowCount/2];
+            double[] Xdata = new double[rowCount / 2];
             double[] Ydata = new double[rowCount / 2];
             string VerticalTrendLineX = "";
             string VerticalTrendLineY = "";
@@ -365,8 +387,9 @@ class RectangleTiles
             myStatistics.TrendLine TrendLine = new myStatistics.TrendLine(Ydata, Xdata);
             double angle = myTool.CorrectingAngle_YXtoXY(TrendLine.Angle());
             VerticalTrendLineAngle.Add(angle);
+
             myReport.newLine("第" + columnNum.ToString("D2") + "行：");
-            myReport.newLine("角度(度數)：\t" + myTool.CorrectingAngle_YXtoXY(TrendLine.Angle()));
+            myReport.newLine("角度(度數)：\t" + angle);
             myReport.newLine("Xdata:\t" + VerticalTrendLineX);
             myReport.newLine("Ydata:\t" + VerticalTrendLineY);
         }
@@ -374,14 +397,17 @@ class RectangleTiles
         myReport.ColumnAngleSD = columnAngleSD;
         myReport.newLine("垂直趨勢線夾角標準差" + columnAngleSD);
 
-        #endregion
+        #endregion 垂直趨勢線
 
-        #endregion
+        #endregion 評分_磁磚中心趨勢線
 
         #region 評分_座標標準差
+
         myReport.newLine("");
         myReport.newLine("座標標準差");
+
         #region 列中磁磚的Y方向
+
         myReport.newLine("列中磁磚的Y方向");
         double[] RowY = new double[rowCount];
         double[] RowSpacing = new double[rowCount - 1];
@@ -425,9 +451,11 @@ class RectangleTiles
         myReport.newLine(RowSpacingReport
             + "\t平均\t" + RowSpacing.Average()
             + "\t標準差\t" + myStatistics.StandardDeviation(RowSpacing));
-        #endregion
+
+        #endregion 列中磁磚的Y方向
 
         #region 行中磁磚的X方向
+
         myReport.newLine("行中磁磚的X方向");
         double[] ColumnX = new double[RectangleGrids.columnCount];
         double[] ColumnSpacing = new double[RectangleGrids.columnCount - 1];
@@ -441,7 +469,6 @@ class RectangleTiles
             {
                 TileXC[rowNum] = myGrid.mmFormPixel(Tiles[columnNum, rowNum * 2 + (columnNum % 2)].center.X);
                 TileXReport += "\t" + TileXC[rowNum];
-
             }
             double TileXC_avg = TileXC.Average();
             if (columnNum % 2 == 1)
@@ -458,7 +485,6 @@ class RectangleTiles
             }
             myReport.newLine(TileXReport);
 
-
             ColumnX[columnNum] = TileXC.Average();
         }
 
@@ -473,16 +499,16 @@ class RectangleTiles
             + "\t平均\t" + ColumnSpacing.Average()
             + "\t標準差\t" + myStatistics.StandardDeviation(ColumnSpacing));
 
+        #endregion 行中磁磚的X方向
 
-
-        #endregion
-
-        #endregion
+        #endregion 評分_座標標準差
 
         #region 評分_磁磚中心與趨勢線距離和
 
         myReport.newLine("筆直度:");
+
         #region 平均Y方向離差
+
         myReport.newLine("Y方向離差:");
         double sumOfTileCenterToTrendLineH = 0;
         for (int rowNum = 0; rowNum < rowCount; rowNum++)
@@ -505,14 +531,16 @@ class RectangleTiles
             }
             myReport.newLine(rowReport);
         }
-        int numberOfTile = rankTopOnly ? RectangleGrids.tileCount /2 : RectangleGrids.tileCount;
+        int numberOfTile = rankTopOnly ? RectangleGrids.tileCount / 2 : RectangleGrids.tileCount;
         double rowResidualAvg = sumOfTileCenterToTrendLineH / numberOfTile;
         string TotalRowReport = "平均y方向離差:" + rowResidualAvg.ToString("0.000");
         myReport.newLine(TotalRowReport);
         myReport.RowResidualAvg = rowResidualAvg;
-        #endregion
+
+        #endregion 平均Y方向離差
 
         #region 平均X方向離差
+
         myReport.newLine("平均X方向離差");
         double sumOfTileCenterToTrendLineV = 0;
         for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
@@ -532,7 +560,6 @@ class RectangleTiles
                 Residual = myGrid.mmFormPixel(Residual);
                 sumOfTileCenterToTrendLineV += Residual;
                 ColumnReport += "\t" + Residual;
-                    
             }
             myReport.newLine(ColumnReport);
         }
@@ -540,12 +567,13 @@ class RectangleTiles
         string TotalColumnReport = "平均X方向離差:" + columnResidualAvg.ToString("0.000");
         myReport.newLine(TotalColumnReport);
         myReport.ColumnResidualAvg = columnResidualAvg;
-        
-        #endregion
 
-        #endregion
+        #endregion 平均X方向離差
+
+        #endregion 評分_磁磚中心與趨勢線距離和
 
         #region 評分_磁磚旋轉角
+
         myReport.newLine("");
         myReport.newLine("磁磚旋轉角");
         string TileAngleFirstRow = "";
@@ -557,6 +585,7 @@ class RectangleTiles
         myReport.newLine(TileAngleFirstRow);
 
         #region 印出每列
+
         for (int rowNum = 0; rowNum < rowCount; rowNum++)
         {
             string angleReport = "第" + rowNum.ToString("D2") + "列";
@@ -582,8 +611,11 @@ class RectangleTiles
                 + "\t" + angleDataInRow.Average()
                 + "\t" + myStatistics.StandardDeviation(angleDataInRow));
         }
-        #endregion
+
+        #endregion 印出每列
+
         #region 統計每行
+
         string angleAvgInColumn = "平均";
         string angleSDInColumn = "標準差";
         for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
@@ -598,7 +630,8 @@ class RectangleTiles
         }
         myReport.newLine(angleAvgInColumn);
         myReport.newLine(angleSDInColumn);
-        #endregion
+
+        #endregion 統計每行
 
         #region 統計整個
 
@@ -613,23 +646,160 @@ class RectangleTiles
                 }
             }
         }
-        #endregion
+
+        #endregion 統計整個
+
         myReport.newLine("總平均\t" + wholeAngleData.Average());
 
         myReport.AngleSD = myStatistics.StandardDeviation(wholeAngleData);
         myReport.newLine("總標準差\t" + myReport.AngleSD);
+
+        #endregion 評分_磁磚旋轉角
+
+        #region 林國良法（磁磚角離差）
+        #region 垂直離差
+        List<double> residualSetY = new List<double>();
+        for (int rowNum = 0; rowNum < rowCount; rowNum++)
+        {
+            List<PointF> pointSetInLineUpper = new List<PointF>();
+            List<PointF> pointSetInLineLower = new List<PointF>();
+            for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
+            {
+                if ((rowNum + columnNum) % 2 != 0)
+                {
+                    continue;
+                }
+                Tile currentTile = new Tile(Tiles[columnNum, rowNum]);
+                pointSetInLineUpper.Add(currentTile.conerLT);
+                pointSetInLineUpper.Add(currentTile.conerRT);
+                pointSetInLineLower.Add(currentTile.conerLD);
+                pointSetInLineLower.Add(currentTile.conerRD);
+            }
+            myStatistics.TrendLine currentTrendLineUpper = new myStatistics.TrendLine(pointSetInLineUpper);
+            myStatistics.TrendLine currentTrendLineLower = new myStatistics.TrendLine(pointSetInLineLower);
+            foreach (var point in pointSetInLineUpper)
+            {
+                double residual = Math.Abs(currentTrendLineUpper.PointToLineDis(point.X, point.Y));
+                residualSetY.Add(residual);
+            }
+            foreach (var point in pointSetInLineLower)
+            {
+                double residual = Math.Abs(currentTrendLineLower.PointToLineDis(point.X, point.Y));
+                residualSetY.Add(residual);
+            }
+        }
+        double residualAvgY = residualSetY.Average();
+        double residualYPerImageWidth = myGrid.mmFormPixel(residualAvgY);
+        myReport.newLine("平均垂直離差(mm)：" + residualYPerImageWidth);
+        myReport.CornerResidualY = residualYPerImageWidth;
+
+
+        double imageWidthInMm = myGrid.mmFormPixel(myGrid.WidthInPixel);
+        double residualYPer3mInMm = residualYPerImageWidth / imageWidthInMm * 3000;
+        myReport.newLine("3m垂直離差(mm)：" + residualYPer3mInMm);
+        myReport.ResidualAvgY3m = residualYPer3mInMm;
+
+
         #endregion
 
-        string output = myReport.result(TilesType.Rectangle);
+        #region 水平離差
+        myReport.newLine("磁磚角離差X方向:");
+        List<double> residualSetX = new List<double>();
+        for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
+        {
+            List<PointF> pointSetInLineLeft = new List<PointF>();
+            List<PointF> pointSetInLineRight = new List<PointF>();
+            for (int rowNum = 0; rowNum < rowCount; rowNum++)
+            {
+                if ((rowNum + columnNum) % 2 != 0)
+                {
+                    continue;
+                }
+                Tile currentTile = new Tile(Tiles[columnNum, rowNum]);
+                pointSetInLineLeft.Add(currentTile.conerLT);
+                pointSetInLineLeft.Add(currentTile.conerLD);
+                pointSetInLineRight.Add(currentTile.conerRT);
+                pointSetInLineRight.Add(currentTile.conerRD);
+            }
+            myStatistics.TrendLine currentTrendLineLeft = new myStatistics.TrendLine(pointSetInLineLeft, true);
+            myStatistics.TrendLine currentTrendLineRight = new myStatistics.TrendLine(pointSetInLineRight, true);
+            foreach (var point in pointSetInLineLeft)
+            {
+                double residual = Math.Abs(currentTrendLineLeft.PointToLineDis(point.Y, point.X));
+                residualSetX.Add(residual);
+            }
+            foreach (var point in pointSetInLineRight)
+            {
+                double residual = Math.Abs(currentTrendLineRight.PointToLineDis(point.Y, point.X));
+                residualSetX.Add(residual);
+            }
+        }
+        double residualAvgX = residualSetX.Average();
+        double residualXPerImageHeight = myGrid.mmFormPixel(residualAvgX);
+        myReport.newLine("平均水平離差(mm)：" + residualXPerImageHeight);
+        myReport.CornerResidualX = residualXPerImageHeight;
+
+        double imageHeightInMm = myGrid.mmFormPixel(myGrid.HeightInPixel);
+        double residualXPer3mInMm = residualXPerImageHeight / imageHeightInMm * 3000;
+        myReport.newLine("3m水平離差(mm)：" + residualXPer3mInMm);
+        myReport.ResidualAvgX3m = residualXPer3mInMm;
+        #endregion
+
+        #endregion
+
+        //string output = myReport.result(TilesType.Rectangle);
         //myReport.doToReport("評分報告");
         myReport.SaveReport(rankTopOnly);
-        return output;
-        #endregion
+        return myReport.ScoringByVariance(TilesType.Rectangle);
+        //return myReport.SaveReport(rankTopOnly);
+
+        #endregion 評分
+    }
+
+    /// <summary>將1D的磁磚陣列轉為2D陣列</summary>
+    public static MCvBox2D[,] TileArrayToTile2DArray(Point theGridRD, Point theGridLT, List<MCvBox2D> BaseMcvBox2DList)
+    {
+        #region 定位磁磚
+
+        RectangleGrids myGrid = new RectangleGrids(theGridRD, theGridLT);
+        MCvBox2D[,] tiles = new MCvBox2D[RectangleGrids.columnCount, RectangleGrids.rowCount];
+
+        bool[,] PositionOccupied = new bool[RectangleGrids.columnCount, RectangleGrids.rowCount];
+        for (int columnIndex = 0; columnIndex < RectangleGrids.columnCount; columnIndex++)
+        {
+            for (int rowIndex = 0; rowIndex < RectangleGrids.rowCount; rowIndex++)
+            {
+                PositionOccupied[columnIndex, rowIndex] = false;
+            }
+        }
+
+        double halfHorizontalSpacing = myGrid.get_GridSpacingHorizontalInPixel / 2;
+
+        for (int index = 0; index < BaseMcvBox2DList.Count; index++)
+        {
+            int columnOfBox = (int)Math.Round((BaseMcvBox2DList[index].center.X - myGrid.GridsLT.X) / halfHorizontalSpacing) - 1;
+
+            int rowOfBox = (int)((BaseMcvBox2DList[index].center.Y - myGrid.GridsLT.Y) / myGrid.get_GridSpacingVerticalInPixel);
+
+            if (PositionOccupied[columnOfBox, rowOfBox] == false)
+            {
+                tiles[columnOfBox, rowOfBox] = BaseMcvBox2DList[index];
+                PositionOccupied[columnOfBox, rowOfBox] = true;
+            }
+            else
+            {
+                throw new Exception("tile" + index + "位置與其他tile重複");
+            }
+        }
+        return tiles;
+
+        #endregion 定位磁磚
     }
 
     #region 錯誤訊息
-    public const int safe = 0;
-    public const int error_TilePosition = 1;
-    #endregion
 
+    public const int error_TilePosition = 1;
+    public const int safe = 0;
+
+    #endregion 錯誤訊息
 }

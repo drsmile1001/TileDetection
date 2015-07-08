@@ -131,6 +131,7 @@ namespace ºÏ¿j¿ëÃÑµû¤À
                 
                 double cannyThresholdLinking = 120.0;
                 Image<Gray, Byte> cannyEdges = gray.Canny(cannyThreshold, cannyThresholdLinking);
+                
                 watch.Reset(); watch.Start();
                 List<Triangle2DF> triangleList = new List<Triangle2DF>();
                 List<MCvBox2D> boxList = new List<MCvBox2D>(); //a box is a rotated rectangle
@@ -316,13 +317,14 @@ namespace ºÏ¿j¿ëÃÑµû¤À
 
 
                 BinImageBox.Image = imgBin;
-                
+                //BinImageBox.Image = cannyEdges;
                 //boxListDone = new MCvBox2D[boxList.Count];
                 //boxList.CopyTo(boxListDone);
                 boxListDone = new List<MCvBox2D>(boxList.ToArray());
 
                 imgOrgPlusCatch.ToBitmap().Save("imgOrgPlusCatch.bmp");
                 imgBin.ToBitmap().Save("imgBin.bmp");
+                cannyEdges.ToBitmap().Save("cannyEdges.bmp");
                 #region µû¤À³¡¤À
 #if false
 
