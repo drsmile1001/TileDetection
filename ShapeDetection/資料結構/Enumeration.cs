@@ -11,3 +11,9 @@ public enum TilesType
     /// <summary>長方形</summary>
     Rectangle
 }
+/// <summary>評分區塊</summary>
+public enum RankArea
+{
+    Top,
+    Down
+}

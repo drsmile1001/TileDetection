@@ -7,8 +7,11 @@ using System.Drawing;
 /// <summary>正方形網格</summary>
 class SquareGrids
 {
+    /// <summary>總列數:12</summary>
     public const int rowCount = 12;
+    /// <summary>一半列數:6</summary>
     public const int rowCountHalf = 6;
+    /// <summary>總行數:12</summary>
     public const int columnCount = 12;
     
     /// <summary>正方形網格的斜邊長度(mm)</summary>

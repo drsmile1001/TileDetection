@@ -30,9 +30,13 @@
         {
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.rdbRankDown = new System.Windows.Forms.RadioButton();
+            this.rdbRankTop = new System.Windows.Forms.RadioButton();
+            this.btnSaveSample = new System.Windows.Forms.Button();
+            this.ckbCanny = new System.Windows.Forms.CheckBox();
             this.btnBatchScore = new System.Windows.Forms.Button();
             this.btnBatchProcess = new System.Windows.Forms.Button();
-            this.ckbRankTopOnly = new System.Windows.Forms.CheckBox();
             this.button1 = new System.Windows.Forms.Button();
             this.ckbDrawTexture = new System.Windows.Forms.CheckBox();
             this.btnReDraw = new System.Windows.Forms.Button();
@@ -79,18 +83,17 @@
             this.nudRowDis = new System.Windows.Forms.NumericUpDown();
             this.nudCoulumnErr = new System.Windows.Forms.NumericUpDown();
             this.nudCoulumnDis = new System.Windows.Forms.NumericUpDown();
-            this.btnSaveSample = new System.Windows.Forms.Button();
             this.btnGen = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.SFD = new System.Windows.Forms.SaveFileDialog();
-            this.ckbCanny = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.groupBox3.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudRowTileAngleErr)).BeginInit();
@@ -125,10 +128,10 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.groupBox3);
             this.splitContainer1.Panel2.Controls.Add(this.ckbCanny);
             this.splitContainer1.Panel2.Controls.Add(this.btnBatchScore);
             this.splitContainer1.Panel2.Controls.Add(this.btnBatchProcess);
-            this.splitContainer1.Panel2.Controls.Add(this.ckbRankTopOnly);
             this.splitContainer1.Panel2.Controls.Add(this.button1);
             this.splitContainer1.Panel2.Controls.Add(this.ckbDrawTexture);
             this.splitContainer1.Panel2.Controls.Add(this.btnReDraw);
@@ -159,10 +162,9 @@
             this.splitContainer1.Panel2.Controls.Add(this.nudRowDis);
             this.splitContainer1.Panel2.Controls.Add(this.nudCoulumnErr);
             this.splitContainer1.Panel2.Controls.Add(this.nudCoulumnDis);
-            this.splitContainer1.Panel2.Controls.Add(this.btnSaveSample);
             this.splitContainer1.Panel2.Controls.Add(this.btnGen);
-            this.splitContainer1.Size = new System.Drawing.Size(1003, 657);
-            this.splitContainer1.SplitterDistance = 815;
+            this.splitContainer1.Size = new System.Drawing.Size(1038, 702);
+            this.splitContainer1.SplitterDistance = 850;
             this.splitContainer1.TabIndex = 0;
             // 
             // pictureBox1
@@ -170,10 +172,66 @@
             this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureBox1.Location = new System.Drawing.Point(0, 0);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(815, 657);
+            this.pictureBox1.Size = new System.Drawing.Size(850, 702);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.rdbRankDown);
+            this.groupBox3.Controls.Add(this.rdbRankTop);
+            this.groupBox3.Controls.Add(this.btnSaveSample);
+            this.groupBox3.Location = new System.Drawing.Point(8, 627);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(163, 47);
+            this.groupBox3.TabIndex = 35;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "評分區塊";
+            // 
+            // rdbRankDown
+            // 
+            this.rdbRankDown.AutoSize = true;
+            this.rdbRankDown.Location = new System.Drawing.Point(60, 21);
+            this.rdbRankDown.Name = "rdbRankDown";
+            this.rdbRankDown.Size = new System.Drawing.Size(47, 16);
+            this.rdbRankDown.TabIndex = 2;
+            this.rdbRankDown.TabStop = true;
+            this.rdbRankDown.Text = "上半";
+            this.rdbRankDown.UseVisualStyleBackColor = true;
+            this.rdbRankDown.CheckedChanged += new System.EventHandler(this.rdbRankArea_CheckedChanged);
+            // 
+            // rdbRankTop
+            // 
+            this.rdbRankTop.AutoSize = true;
+            this.rdbRankTop.Location = new System.Drawing.Point(6, 21);
+            this.rdbRankTop.Name = "rdbRankTop";
+            this.rdbRankTop.Size = new System.Drawing.Size(47, 16);
+            this.rdbRankTop.TabIndex = 2;
+            this.rdbRankTop.TabStop = true;
+            this.rdbRankTop.Text = "上半";
+            this.rdbRankTop.UseVisualStyleBackColor = true;
+            this.rdbRankTop.CheckedChanged += new System.EventHandler(this.rdbRankArea_CheckedChanged);
+            // 
+            // btnSaveSample
+            // 
+            this.btnSaveSample.Location = new System.Drawing.Point(-54, -24);
+            this.btnSaveSample.Name = "btnSaveSample";
+            this.btnSaveSample.Size = new System.Drawing.Size(75, 23);
+            this.btnSaveSample.TabIndex = 1;
+            this.btnSaveSample.Text = "存檔";
+            this.btnSaveSample.UseVisualStyleBackColor = true;
+            this.btnSaveSample.Click += new System.EventHandler(this.btnSaveSample_Click);
+            // 
+            // ckbCanny
+            // 
+            this.ckbCanny.AutoSize = true;
+            this.ckbCanny.Location = new System.Drawing.Point(120, 271);
+            this.ckbCanny.Name = "ckbCanny";
+            this.ckbCanny.Size = new System.Drawing.Size(52, 16);
+            this.ckbCanny.TabIndex = 34;
+            this.ckbCanny.Text = "canny";
+            this.ckbCanny.UseVisualStyleBackColor = true;
             // 
             // btnBatchScore
             // 
@@ -194,19 +252,6 @@
             this.btnBatchProcess.Text = "照片To電腦繪製";
             this.btnBatchProcess.UseVisualStyleBackColor = true;
             this.btnBatchProcess.Click += new System.EventHandler(this.btnBatchProcess_Click);
-            // 
-            // ckbRankTopOnly
-            // 
-            this.ckbRankTopOnly.AutoSize = true;
-            this.ckbRankTopOnly.Checked = true;
-            this.ckbRankTopOnly.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.ckbRankTopOnly.Location = new System.Drawing.Point(96, 9);
-            this.ckbRankTopOnly.Name = "ckbRankTopOnly";
-            this.ckbRankTopOnly.Size = new System.Drawing.Size(84, 16);
-            this.ckbRankTopOnly.TabIndex = 31;
-            this.ckbRankTopOnly.Text = "只評分上半";
-            this.ckbRankTopOnly.UseVisualStyleBackColor = true;
-            this.ckbRankTopOnly.CheckedChanged += new System.EventHandler(this.ckbRankTopOnly_CheckedChanged);
             // 
             // button1
             // 
@@ -881,16 +926,6 @@
             0,
             0});
             // 
-            // btnSaveSample
-            // 
-            this.btnSaveSample.Location = new System.Drawing.Point(7, 540);
-            this.btnSaveSample.Name = "btnSaveSample";
-            this.btnSaveSample.Size = new System.Drawing.Size(75, 23);
-            this.btnSaveSample.TabIndex = 1;
-            this.btnSaveSample.Text = "存檔";
-            this.btnSaveSample.UseVisualStyleBackColor = true;
-            this.btnSaveSample.Click += new System.EventHandler(this.btnSaveSample_Click);
-            // 
             // btnGen
             // 
             this.btnGen.Location = new System.Drawing.Point(8, 511);
@@ -909,9 +944,9 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 635);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 680);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(1003, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(1038, 22);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -920,21 +955,11 @@
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
             this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 17);
             // 
-            // ckbCanny
-            // 
-            this.ckbCanny.AutoSize = true;
-            this.ckbCanny.Location = new System.Drawing.Point(120, 271);
-            this.ckbCanny.Name = "ckbCanny";
-            this.ckbCanny.Size = new System.Drawing.Size(52, 16);
-            this.ckbCanny.TabIndex = 34;
-            this.ckbCanny.Text = "canny";
-            this.ckbCanny.UseVisualStyleBackColor = true;
-            // 
             // SampleGen
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1003, 657);
+            this.ClientSize = new System.Drawing.Size(1038, 702);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.splitContainer1);
             this.Name = "SampleGen";
@@ -946,6 +971,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            this.groupBox3.ResumeLayout(false);
+            this.groupBox3.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
@@ -1028,10 +1055,12 @@
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.CheckBox ckbRankTopOnly;
         private System.Windows.Forms.Button btnBatchProcess;
         private System.Windows.Forms.Button btnBatchScore;
         private System.Windows.Forms.SaveFileDialog SFD;
         private System.Windows.Forms.CheckBox ckbCanny;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.RadioButton rdbRankDown;
+        private System.Windows.Forms.RadioButton rdbRankTop;
     }
 }

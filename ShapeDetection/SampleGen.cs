@@ -56,8 +56,7 @@ namespace 磁磚辨識評分
 
         private List<string> ScoreList = new List<string>();
 
-        /// <summary>只評分上半</summary>
-        private bool RankTopOnly = true;
+        private RankArea rankArea = RankArea.Top;
 
         public SampleGen()
         {
@@ -82,7 +81,7 @@ namespace 磁磚辨識評分
                 Point RDPoint = LT.conerLT.ToPoint();
                 RDPoint.Offset((int)(50 * 12 * pixelpermm), (int)(50 * 12 * pixelpermm));
                 SquareGrids myGrid = new SquareGrids(RDPoint, LT.conerLT.ToPoint());
-                result = SquareTiles.RankSquareTile(fullFilePath, genTiles, myGrid, RankTopOnly);
+                result = SquareTiles.RankSquareTile(fullFilePath, genTiles, myGrid, rankArea);
                 toolStripStatusLabel1.Text = result;
             }
             else
@@ -91,7 +90,7 @@ namespace 磁磚辨識評分
                 Point RDPoint = LT.conerLT.ToPoint();
                 RDPoint.Offset((int)(RectangleGrids.Length * pixelpermm), (int)(RectangleGrids.Width * pixelpermm));
                 RectangleGrids myGrid = new RectangleGrids(RDPoint, LT.conerLT.ToPoint());
-                result = RectangleTiles.rankRectangleTiles(fullFilePath, genTiles, myGrid, RankTopOnly);
+                result = RectangleTiles.rankRectangleTiles(fullFilePath, genTiles, myGrid, rankArea);
                 toolStripStatusLabel1.Text = result;
             }
             return result;
@@ -1354,6 +1353,22 @@ namespace 磁磚辨識評分
             }
             Process.Start("BatchScoring.txt");
             this.Invoke(new Action<string>(SetBtnBatchScore), new object[] { "批次評分" });
+        }
+
+        private void rdbRankArea_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rdbRankTop.Checked)
+            {
+                rankArea = RankArea.Top;
+            }
+            else if (rdbRankDown.Checked)
+            {
+                rankArea = RankArea.Down;
+            }
+            else
+            {
+                throw SmileLib.EnumTool.OutOfEnum<RankArea>();
+            }
         }
     }
 }

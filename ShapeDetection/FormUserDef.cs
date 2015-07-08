@@ -42,8 +42,7 @@ namespace 磁磚辨識評分
 
         private List<Point> pointsOfAddingTile = new List<Point>();
 
-        /// <summary>只評分上半</summary>
-        private bool RankTopOnly = true;
+        private RankArea rankArea = RankArea.Top;
 
         #region 和定義邊界有關的變數
 
@@ -907,7 +906,7 @@ namespace 磁磚辨識評分
                 }
                 else
                 {
-                    mySquareTiles = new SquareTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName, RankTopOnly);
+                    mySquareTiles = new SquareTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName, rankArea);
                     if (mySquareTiles.msg == SquareTiles.error_TilePosition)
                     {
                         lblMsg.Text = "磁磚位置有誤，請檢查";
@@ -925,7 +924,7 @@ namespace 磁磚辨識評分
                                 ImageForShow.Draw(output, ref f, Point.Round(mySquareTiles.Tiles[columnNum, rowNum].center), new Bgr(Color.Black));
                             }
                         }
-
+                        MessageBox.Show(mySquareTiles.RankResult);
                         #region 印出磁磚
 
 #if false
@@ -971,7 +970,7 @@ namespace 磁磚辨識評分
                 }
                 else
                 {
-                    myRetangleTiles = new RectangleTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName, RankTopOnly);
+                    myRetangleTiles = new RectangleTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName, rankArea);
                     if (myRetangleTiles.msg == RectangleTiles.error_TilePosition)
                     {
                         lblMsg.Text = "磁磚位置有誤，請檢查";
@@ -993,7 +992,7 @@ namespace 磁磚辨識評分
                                 }
                             }
                         }
-
+                        MessageBox.Show(myRetangleTiles.RankResult);
                         #region 印出磁磚
 
 #if false
@@ -1788,9 +1787,21 @@ namespace 磁磚辨識評分
             drawWatchArea(centerOfWatchArea.X, centerOfWatchArea.Y);
         }
 
-        private void ckbRankTopOnly_CheckedChanged(object sender, EventArgs e)
+        private void rdbRankArea_CheckedChanged(object sender, EventArgs e)
         {
-            RankTopOnly = ckbRankTopOnly.Checked;
+            if (rdbRankTop.Checked)
+            {
+                rankArea = RankArea.Top;
+            }
+            else if (rdbRankDown.Checked)
+            {
+                rankArea = RankArea.Down;
+            }
+            else
+            {
+                throw SmileLib.EnumTool.OutOfEnum<RankArea>();
+            }
+
         }
     }
 

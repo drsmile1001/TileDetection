@@ -89,6 +89,9 @@
     <Reference Include="Emgu.Util">
       <HintPath>.\Emgu.Util.dll</HintPath>
     </Reference>
+    <Reference Include="SmileLib">
+      <HintPath>..\..\..\Documents\Visual Studio 2013\Projects\SmileLib\SmileLib\bin\Release\SmileLib.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />

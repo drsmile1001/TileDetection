@@ -67,9 +67,21 @@ internal class report
     }
 
     /// <summary>進行存檔</summary>
-    public string SaveReport(bool rankTopOnly)
+    public string SaveReport(RankArea rankArea)
     {
-        string txtFileName = rankTopOnly ? (fileName + "ReportT.txt") : (fileName + "Report.txt");
+        string txtFileName;
+        switch (rankArea)
+        {
+            case RankArea.Top:
+                txtFileName = fileName + "ReportT.txt";
+                break;
+            case RankArea.Down:
+                txtFileName = fileName + "ReportD.txt";
+                break;
+            default:
+                throw SmileLib.EnumTool.OutOfEnum<RankArea>();
+        }
+
         string dataLine = "";
         using (StreamWriter sw = new StreamWriter(txtFileName, false))
         {
@@ -97,16 +109,14 @@ internal class report
                 ResidualAvgX3m.ToString()+ "\t" +
                 CornerResidualY.ToString() + "\t" + 
                 CornerResidualX.ToString();
-                
             sw.WriteLine(dataLine);
-            //System.Windows.Forms.Clipboard.SetText(dataLine);
+
             foreach (string line in stringsToReport)
             {
                 sw.WriteLine(line);
             }
             sw.Close();
         }
-        //Console.Beep();
         return dataLine;
     }
 
