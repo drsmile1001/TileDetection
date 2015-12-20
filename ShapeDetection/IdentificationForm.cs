@@ -1,4 +1,4 @@
-
+ï»¿
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -12,7 +12,7 @@ using Emgu.CV.Structure;
 using System.Diagnostics;
 using System.Drawing.Imaging;
 
-namespace ºÏ¿j¿ëÃÑµû¤À
+namespace ç£ç£šè¾¨è­˜è©•åˆ†
 {
 
 
@@ -87,12 +87,12 @@ namespace ºÏ¿j¿ëÃÑµû¤À
                 StringBuilder msgBuilder = new StringBuilder("Performance: ");
 
                 //Load the image from file and resize it for display
-                /*­ì©l·|resize
+                /*åŸå§‹æœƒresize
                Image<Bgr, Byte> img = 
                   new Image<Bgr, byte>(fileNameTextBox.Text)
                   .Resize(800, 800, Emgu.CV.CvEnum.INTER.CV_INTER_LINEAR, true);
                 */
-                //¦Û¤v­×§ï ¤£resize
+                //è‡ªå·±ä¿®æ”¹ ä¸resize
                 Image<Bgr, Byte> img =
                   new Image<Bgr, byte>(fileNameTextBox.Text);
 
@@ -175,11 +175,11 @@ namespace ºÏ¿j¿ëÃÑµû¤À
                         }
                     }
                 
-                #region ²M°£­«½Æ°»´ú
+                #region æ¸…é™¤é‡è¤‡åµæ¸¬
                 
-                //¸g¹L¤W­±ªº¾Ş§@¡AboxList¸Ì­±À³¸Ó·|¦³©Ò¦³°»´ú¨ìªºªø¤è§Î¡A¦Ó¥B¦P¤@­ÓºÏ¿j¦³¾÷·|³Q°»´ú¦h¦¸¡C
-                //¹w­p«Ø¥ß¨â­Ó·sªºboxList ¤@­Ó¼È¦s¤¤¤ß®y¼Ğ¬Ûªñªºbox¡A¤@­Ó©ñ³B²z¹L¨S¦³­«½Æªºbox
-                //¹w­p§@ªk¡G¦bÂÂªºboxList¨ú¥X¤@box¡A¤ñ¹ï¦³¬Ûªñ®y¼Ğªºbox¤]³£¨ú¥X©ñ¶itempBoxList¡A§ä§¹«á¥­§¡tempbox¸Ìªºµ²ªG¡A©ñ¶iboxListFinish
+                //ç¶“éä¸Šé¢çš„æ“ä½œï¼ŒboxListè£¡é¢æ‡‰è©²æœƒæœ‰æ‰€æœ‰åµæ¸¬åˆ°çš„é•·æ–¹å½¢ï¼Œè€Œä¸”åŒä¸€å€‹ç£ç£šæœ‰æ©Ÿæœƒè¢«åµæ¸¬å¤šæ¬¡ã€‚
+                //é è¨ˆå»ºç«‹å…©å€‹æ–°çš„boxList ä¸€å€‹æš«å­˜ä¸­å¿ƒåº§æ¨™ç›¸è¿‘çš„boxï¼Œä¸€å€‹æ”¾è™•ç†éæ²’æœ‰é‡è¤‡çš„box
+                //é è¨ˆä½œæ³•ï¼šåœ¨èˆŠçš„boxListå–å‡ºä¸€boxï¼Œæ¯”å°æœ‰ç›¸è¿‘åº§æ¨™çš„boxä¹Ÿéƒ½å–å‡ºæ”¾é€²tempBoxListï¼Œæ‰¾å®Œå¾Œå¹³å‡tempboxè£¡çš„çµæœï¼Œæ”¾é€²boxListFinish
                 const double shourtDistince = 10.0;
                 List<MCvBox2D> boxListNew = new List<MCvBox2D>();
                 bool[] boxListTag = new bool[boxList.Count];
@@ -191,13 +191,13 @@ namespace ºÏ¿j¿ëÃÑµû¤À
                     {
                         continue;
                     }
-                    //¨ú¥X·s¼Ë¥»
+                    //å–å‡ºæ–°æ¨£æœ¬
                     List<MCvBox2D> boxListTemp = new List<MCvBox2D>();
                     boxListTemp.Add(boxItemSample);
                     boxListTag[indexOfSample] = true;
                     
 
-                    //§ä¨ì©M¼Ë¥»±µªñªºbox¡A©ñ¶iboxListTemp
+                    //æ‰¾åˆ°å’Œæ¨£æœ¬æ¥è¿‘çš„boxï¼Œæ”¾é€²boxListTemp
                     foreach (MCvBox2D boxItemCompared in boxList)
                     {
 
@@ -219,7 +219,7 @@ namespace ºÏ¿j¿ëÃÑµû¤À
                             boxListTag[indexOfcompared] = true;
                         }
                     }
-                    //­pºâboxListTemp¸Ì­±ªºbox¼Æ­È
+                    //è¨ˆç®—boxListTempè£¡é¢çš„boxæ•¸å€¼
                     double[] locationX = new double[boxListTemp.Count];
                     double[] locationY = new double[boxListTemp.Count];
                     double[] angle = new double[boxListTemp.Count];
@@ -269,7 +269,7 @@ namespace ºÏ¿j¿ëÃÑµû¤À
 
 
                 
-                lblBoxFind.Text = "§ä¨ì¡G" + boxList.Count.ToString();
+                lblBoxFind.Text = "æ‰¾åˆ°ï¼š" + boxList.Count.ToString();
                 watch.Stop();
                 msgBuilder.Append(String.Format("Triangles & Rectangles - {0} ms; ", watch.ElapsedMilliseconds));
               
@@ -284,7 +284,7 @@ namespace ºÏ¿j¿ëÃÑµû¤À
 
                 #region draw triangles and rectangles
                 imgCatch = img.CopyBlank();
-                //­ì©l½X
+                //åŸå§‹ç¢¼
                 /*  
                foreach (Triangle2DF triangle in triangleList)
                   triangleRectangleImage.Draw(triangle, new Bgr(Color.DarkBlue), 2);
@@ -293,7 +293,7 @@ namespace ºÏ¿j¿ëÃÑµû¤À
                   triangleRectangleImage.Draw(box, new Bgr(Color.DarkOrange), 2);
                triangleRectangleImageBox.Image = triangleRectangleImage;
                  */
-                //¦Û¤v­×§ï
+                //è‡ªå·±ä¿®æ”¹
                 int boxNum = 0;
                 foreach (MCvBox2D box in boxList)
                 {
@@ -325,7 +325,7 @@ namespace ºÏ¿j¿ëÃÑµû¤À
                 imgOrgPlusCatch.ToBitmap().Save("imgOrgPlusCatch.bmp");
                 imgBin.ToBitmap().Save("imgBin.bmp");
                 cannyEdges.ToBitmap().Save("cannyEdges.bmp");
-                #region µû¤À³¡¤À
+                #region è©•åˆ†éƒ¨åˆ†
 #if false
 
                 double[] anglelist = new double[boxList.Count];

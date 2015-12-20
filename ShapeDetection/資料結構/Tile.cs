@@ -1,19 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Emgu.CV.Structure;
+using System;
 using System.Drawing;
-using Emgu.CV.Structure;
+using System.Linq;
+using System.Collections.Generic;
 
 /// <summary>用四個角定義的磁磚</summary>
-class Tile
+public class Tile
 {
     /// <summary>左上點</summary>
     public PointF conerLT;
+
     /// <summary>左下點</summary>
     public PointF conerLD;
+
     /// <summary>右上點</summary>
     public PointF conerRT;
+
     /// <summary>右下點</summary>
     public PointF conerRD;
 
@@ -26,15 +28,47 @@ class Tile
         return new PointF(x, y);
     }
 
-    private PointF[] topEdge;
-    private PointF[] leftEdge;
-    private PointF[] rightEdge;
-    private PointF[] downEdge;
+    private Dictionary<EdgeDirection, PointF[]> _Edge = new Dictionary<EdgeDirection, PointF[]>();
 
-    public PointF[] TopEdge { get { return topEdge; } }
-    public PointF[] LeftEdge { get { return leftEdge; } }
-    public PointF[] RightEdge { get { return rightEdge; } }
-    public PointF[] DownEdge { get { return downEdge; } }
+    public IReadOnlyDictionary<EdgeDirection, PointF[]> Edge { get { return _Edge; } }
+
+#if false
+    public PointF[] TopEdge { get; private set; }
+
+    public PointF[] LeftEdge { get; private set; }
+
+    public PointF[] RightEdge { get; private set; }
+
+    public PointF[] DownEdge { get; private set; }
+
+    public PointF[] AllEdge { get { return TopEdge.Union(LeftEdge).Union(RightEdge).Union(DownEdge).ToArray(); } } 
+#endif
+
+    public PointF[] AllEdge
+    {
+        get
+        {
+            return
+                Edge[EdgeDirection.Top]
+                .Union(Edge[EdgeDirection.Right])
+                .Union(Edge[EdgeDirection.Down])
+                .Union(Edge[EdgeDirection.Left]).ToArray();
+        }
+    }
+
+    private Dictionary<EdgeDirection, PointF[]> _HalfEdge = new Dictionary<EdgeDirection, PointF[]>();
+
+    public IReadOnlyDictionary<EdgeDirection, PointF[]> HalfEdge { get { return _HalfEdge; } }
+
+#if false
+    public PointF[] TopHalfEdge { get; private set; }
+
+    public PointF[] LeftHalfEdge { get; private set; }
+
+    public PointF[] RightHalfEdge { get; private set; }
+
+    public PointF[] DownHalfEdge { get; private set; } 
+#endif
 
     /// <summary>建構式，透過MCvBox2D。</summary>
     public Tile(MCvBox2D box)
@@ -42,7 +76,6 @@ class Tile
         float angle = box.angle;
         float Width = box.size.Width;
         float Height = box.size.Height;
-
 
         if (angle > 45.0f || angle < -45.0f)
         {
@@ -95,34 +128,56 @@ class Tile
             + (double)Width * Math.Sin(angle) * 0.5
             + (double)Height * Math.Cos(angle) * 0.5);
 
-
         #region 建立邊
-        setEdge(ref topEdge, conerLT, conerRT);
-        setEdge(ref rightEdge, conerRT, conerRD);
-        setEdge(ref downEdge, conerRD, conerLD);
-        setEdge(ref leftEdge, conerLD, conerLT);
-
-        #endregion
+        _Edge.Add(EdgeDirection.Top, GenLinePointSet(conerLT, conerRT));
+        _Edge.Add(EdgeDirection.Right, GenLinePointSet(conerRT, conerRD));
+        _Edge.Add(EdgeDirection.Down, GenLinePointSet(conerRD, conerLD));
+        _Edge.Add(EdgeDirection.Left, GenLinePointSet(conerLD, conerLT));
+#if false
+        TopEdge = GenLinePointSet(conerLT, conerRT);
+        RightEdge = GenLinePointSet(conerRT, conerRD);
+        DownEdge = GenLinePointSet(conerRD, conerLD);
+        LeftEdge = GenLinePointSet(conerLD, conerLT); 
+#endif
+        _HalfEdge.Add(EdgeDirection.Top, GenLinePointSet(conerLT, conerRT, 40, 10));
+        _HalfEdge.Add(EdgeDirection.Right, GenLinePointSet(conerLT, conerRT, 40, 10));
+        _HalfEdge.Add(EdgeDirection.Down, GenLinePointSet(conerRD, conerLD, 40, 10));
+        _HalfEdge.Add(EdgeDirection.Left, GenLinePointSet(conerLD, conerLT, 40, 10));
+#if false
+        TopHalfEdge = GenLinePointSet(conerLT, conerRT, 40, 10);
+        RightHalfEdge = GenLinePointSet(conerRT, conerRD, 40, 10);
+        DownHalfEdge = GenLinePointSet(conerRD, conerLD, 40, 10);
+        LeftHalfEdge = GenLinePointSet(conerLD, conerLT, 40, 10); 
+#endif
+        #endregion 建立邊
     }
 
-    private void setEdge(ref PointF[] edge, PointF a, PointF b)
+    private PointF[] GenLinePointSet(PointF a, PointF b,int pointCount = 20,int deadPointCount = 0)
     {
-        edge = new PointF[20];
-        PointF A = a;
-        PointF B = b;
-        PointF deff = new PointF(B.X - A.X, B.Y - A.Y);
-        for (int i = 0; i < 20; i++)
+        if (2*deadPointCount >= pointCount)
         {
-            edge[i] = new PointF(A.X + ((float)i / 20) * deff.X, A.Y + ((float)i / 20) * deff.Y);
+            throw new System.ArgumentException("死區點數量過多");
         }
+        if (pointCount <= 0)
+        {
+            throw new System.ArgumentException("取樣點不足");
+        }
+        PointF[] edge = new PointF[pointCount - 2*deadPointCount];
+        PointF diff = new PointF(b.X - a.X, b.Y - a.Y);
+        for (int i = deadPointCount; i < pointCount - deadPointCount; i++)
+        {
+            edge[i-deadPointCount] = new PointF(a.X + ((float)i / pointCount) * diff.X, a.Y + ((float)i / pointCount) * diff.Y);
+        }
+        return edge;
     }
 
     public Tile()
     {
-
     }
+}
 
 
-
-
+public enum EdgeDirection
+{
+    Top, Down, Right, Left
 }

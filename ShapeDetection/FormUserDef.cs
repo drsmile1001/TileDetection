@@ -6,12 +6,13 @@ using System.Windows.Forms;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using System.Runtime.InteropServices;
-
+using System.Threading;
 
 #region 存檔用
 
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using System.Diagnostics;
 
 #endregion 存檔用
 
@@ -19,6 +20,16 @@ namespace 磁磚辨識評分
 {
     public partial class FormUserDef : Form
     {
+        #region 偵錯目的參數
+
+        /// <summary>繪製誤差</summary>
+        private bool DRAW_ERR = false;
+
+        /// <summary>輸出磁磚位置</summary>
+        private bool PRINT_TILES_LOCATION = false;
+
+        #endregion 偵錯目的參數
+
         #region 公用變數
 
         private string fileName;
@@ -28,6 +39,9 @@ namespace 磁磚辨識評分
         private Image<Bgr, Byte> ThumbnailImage;
         private Image<Bgr, Byte> imageWatchArea;
         private List<MCvBox2D> BaseMcvBox2DList;
+
+        /// <summary>記錄需要繪製的誤差標記</summary>
+        private ErrMark currentErrMark;
 
         private double ScaleOfThumbnail = 1;
         private Point centerOfWatchArea = new Point(0, 0);
@@ -71,7 +85,8 @@ namespace 磁磚辨識評分
             BaseImage = InputImage.Clone();
             ImageForShow = InputImage.Clone();
             BaseMcvBox2DList = new List<MCvBox2D>(InputMcvBox2DList.ToArray());
-            lbxTileList.Items.Clear();
+            Invoke(new Action(() => { lbxTileList.Items.Clear(); }));
+
             foreach (MCvBox2D box in BaseMcvBox2DList)
             {
                 ImageForShow.Draw(box, new Bgr(Color.Red), 1);
@@ -80,10 +95,10 @@ namespace 磁磚辨識評分
             {
                 ImageForShow.Draw(BaseMcvBox2DList[index], new Bgr(Color.Red), 1);
                 string boxNum = "tile" + index.ToString();
-                lbxTileList.Items.Add(boxNum);
+                Invoke(new Action(() => { lbxTileList.Items.Add(boxNum); }));
             }
             ThumbnailImage = InputImage.Clone().Resize(160, 120, Emgu.CV.CvEnum.INTER.CV_INTER_LINEAR, true);
-            ScaleOfThumbnail = (double)ThumbnailImage.Height / (double)InputImage.Height;
+            ScaleOfThumbnail = (double)ThumbnailImage.Height / InputImage.Height;
             picboxThumbnail.Image = ThumbnailImage.ToBitmap();
             picboxWatchArea.Image = ImageForShow.ToBitmap();
 
@@ -93,14 +108,14 @@ namespace 磁磚辨識評分
 
             drawThumbnailImage();
             drawWatchArea();
-            lblTileCount.Text = "總數：" + BaseMcvBox2DList.Count.ToString();
+            Invoke(new Action(() => { lblTileCount.Text = "總數：" + BaseMcvBox2DList.Count.ToString(); }));
 
             #endregion 初始化縮圖和觀看視窗
 
             //設定比例參數
             SetPixelPerCentimeter(Path.GetFileNameWithoutExtension(fileName));
             //顯示檔名
-            this.Text = fileName;
+            Invoke(new Action(() => { Text = fileName; ; }));
             this.fileName = fileName;
         }
 
@@ -342,7 +357,7 @@ namespace 磁磚辨識評分
 
                         for (int column = 0; column < RectangleGrids.columnCount; column++)
                         {
-                            for (int row = 0; row < RectangleGrids.rowCount; row++)
+                            for (int row = 0; row < RectangleGrids.ROW_COUNT; row++)
                             {
                                 if ((column + row) % 2 != 1)
                                 {
@@ -813,6 +828,7 @@ namespace 磁磚辨識評分
                 Stream output = File.Create(fileName);
                 formatter.Serialize(output, tempTileFileV2);
                 output.Close();
+                ImageForShow.ToBitmap().Save(fileName + "imageForShow.bmp");
                 using (StreamWriter sw = new StreamWriter("BaseMcvBox2D.txt"))
                 {
                     foreach (var box in BaseMcvBox2DList)
@@ -827,7 +843,6 @@ namespace 磁磚辨識評分
         /// <summary>載入舊檔</summary>
         private void btnLoad_Click(object sender, EventArgs e)
         {
-#if false
             fileName = "";
 
             if (openFileDialog1.ShowDialog() != DialogResult.OK)
@@ -835,21 +850,11 @@ namespace 磁磚辨識評分
                 return;
             }
             fileName = openFileDialog1.FileName;
+            OpenFile();
+        }
 
-            BinaryFormatter formatter = new BinaryFormatter();
-            Stream input = File.OpenRead(fileName);
-            IdentifyTileFile tempTileFile = (IdentifyTileFile)formatter.Deserialize(input);
-            input.Close();
-
-            LoadIDTiles(tempTileFile.BaseImage, tempTileFile.getMcvbox2DList(), fileName);
-#endif
-            fileName = "";
-
-            if (openFileDialog1.ShowDialog() != DialogResult.OK)
-            {
-                return;
-            }
-            fileName = openFileDialog1.FileName;
+        private void OpenFile()
+        {
             BinaryFormatter formatter = new BinaryFormatter();
             Stream input = File.OpenRead(fileName);
             object inputDeserialize = formatter.Deserialize(input);
@@ -861,14 +866,12 @@ namespace 磁磚辨識評分
                 WorkspaceType = (tempTileFile as IdentifyTileFileV2).WorkAreaType;
                 WorkspaceLeftTop = (tempTileFile as IdentifyTileFileV2).WorkAreaLeftTop;
                 WorkspaceRightDown = (tempTileFile as IdentifyTileFileV2).WorkAreaRightDown;
-                Console.WriteLine("讀到新版本");
-                lblFileEdition.Text = "新版本";
+                Invoke(new Action(() => { lblFileEdition.Text = "新版本"; }));
             }
             catch (Exception)
             {
                 tempTileFile = (IdentifyTileFile)inputDeserialize;
-                Console.WriteLine("讀到舊版本");
-                lblFileEdition.Text = "舊版本";
+                Invoke(new Action(() => { lblFileEdition.Text = "舊版本"; }));
             }
             LoadIDTiles(tempTileFile.BaseImage, tempTileFile.getMcvbox2DList(), fileName);
         }
@@ -886,141 +889,164 @@ namespace 磁磚辨識評分
                 //MessageBox.Show("無可用比例參數");
                 return;
             }
-            nudPixelPerCentimeter.Value = (decimal)value;
+            Invoke(new Action(() => { nudPixelPerCentimeter.Value = (decimal)value; }));
         }
 
         /// <summary>對正方形磁磚評分</summary>
         private void btnGiveGradeSquare_Click(object sender, EventArgs e)
         {
+            try
+            {
+                ScoreSquareSample();
+            }
+            catch (Exception exp)
+            {
+                MessageBox.Show(exp.Message);
+            }
+        }
+
+        /// <summary>評分正方磚</summary>
+        private TilesReport ScoreSquareSample(bool drawImage = false,bool isTop = true)
+        {
             if (WorkspaceLeftTop == Point.Empty || WorkspaceRightDown == Point.Empty)
             {
-                lblMsg.Text = "請先設定工作區域";
+                throw new Exception("請先設定工作區域");
             }
-            else
+            if (BaseMcvBox2DList.Count != SquareGrids.ROW_COUNT * SquareGrids.COLUMN_COUNT)
             {
-                SquareTiles mySquareTiles;
+                throw new Exception("磁磚數量不正確，無法評分");
+            }
 
-                if (BaseMcvBox2DList.Count != SquareGrids.rowCount * SquareGrids.columnCount)
+            SquareTiles mySquareTiles = new SquareTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName, rankArea);
+            mySquareTiles.Report.ScoringByVariance(TilesType.Square,isTop);
+            if (mySquareTiles.msg == SquareTiles.error_TilePosition)
+            {
+                throw new Exception("磁磚位置有誤，請檢查");
+            }
+
+            //繪製磁磚
+            if (drawImage)
+            {
+                drawImageForShow();
+                MCvFont f = new MCvFont(Emgu.CV.CvEnum.FONT.CV_FONT_HERSHEY_COMPLEX, 1, 1);
+                for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT; columnNum++)
                 {
-                    lblMsg.Text = "磁磚數量不正確，無法評分";
-                }
-                else
-                {
-                    mySquareTiles = new SquareTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName, rankArea);
-                    if (mySquareTiles.msg == SquareTiles.error_TilePosition)
+                    for (int rowNum = 0; rowNum < SquareGrids.ROW_COUNT; rowNum++)
                     {
-                        lblMsg.Text = "磁磚位置有誤，請檢查";
-                        return;
-                    }
-                    else
-                    {
-                        drawImageForShow();
-                        MCvFont f = new MCvFont(Emgu.CV.CvEnum.FONT.CV_FONT_HERSHEY_COMPLEX, 1, 1);
-                        for (int columnNum = 0; columnNum < SquareGrids.columnCount; columnNum++)
-                        {
-                            for (int rowNum = 0; rowNum < SquareGrids.rowCount; rowNum++)
-                            {
-                                string output = "(" + columnNum + "," + rowNum + ")";
-                                ImageForShow.Draw(output, ref f, Point.Round(mySquareTiles.Tiles[columnNum, rowNum].center), new Bgr(Color.Black));
-                            }
-                        }
-                        MessageBox.Show(mySquareTiles.RankResult);
-                        #region 印出磁磚
-
-#if false
-                        using (StreamWriter sw = new StreamWriter("TilesLocation.txt"))
-                        {
-                            for (int column = 0; column < mySquareTiles.Tiles.GetLength(0); column++)
-                            {
-                                for (int row = 0; row < mySquareTiles.Tiles.GetLength(1); row++)
-                                {
-                                    string line = column.ToString() + "," + row.ToString();
-                                    line += "\t" + mySquareTiles.Tiles[column, row].center.X.ToString();
-                                    line += "\t" + mySquareTiles.Tiles[column, row].center.Y.ToString();
-                                    line += "\t" + mySquareTiles.Tiles[column, row].angle.ToString();
-                                    sw.WriteLine(line);
-                                }
-                            }
-                            sw.Close();
-                        }
-                        Process.Start("TilesLocation.txt");
-#endif
-
-                        #endregion 印出磁磚
+                        string output = "(" + columnNum + "," + rowNum + ")";
+                        ImageForShow.Draw(output, ref f, Point.Round(mySquareTiles.Tiles[columnNum, rowNum].center), new Bgr(Color.Black));
                     }
                 }
             }
+
+            //繪製誤差標記
+            if (DRAW_ERR)
+            {
+                foreach (var item in mySquareTiles.CurrentErrMark.GapErr)
+                {
+                    ImageForShow.Draw(item, new Bgr(0, 0, 255), 3);
+                }
+            }
+
+            //輸出磁磚位置
+            if (PRINT_TILES_LOCATION)
+            {
+                using (StreamWriter sw = new StreamWriter("TilesLocation.txt"))
+                {
+                    for (int column = 0; column < mySquareTiles.Tiles.GetLength(0); column++)
+                    {
+                        for (int row = 0; row < mySquareTiles.Tiles.GetLength(1); row++)
+                        {
+                            string line = column.ToString() + "," + row.ToString();
+                            line += "\t" + mySquareTiles.Tiles[column, row].center.X.ToString();
+                            line += "\t" + mySquareTiles.Tiles[column, row].center.Y.ToString();
+                            line += "\t" + mySquareTiles.Tiles[column, row].angle.ToString();
+                            sw.WriteLine(line);
+                        }
+                    }
+                    sw.Close();
+                }
+                Process.Start("TilesLocation.txt");
+            }
+
+            return mySquareTiles.Report;
         }
 
         /// <summary>對長方形磁磚評分</summary>
         private void btnGiveGradeRectangle_Click(object sender, EventArgs e)
         {
+            try
+            {
+                ScoreRectangleSample();
+            }
+            catch (Exception exp)
+            {
+                MessageBox.Show(exp.Message);
+            }
+        }
+
+        /// <summary>評分丁掛磚</summary>
+        private TilesReport ScoreRectangleSample(bool drawImage = false,bool isTop = true)
+        {
             if (WorkspaceLeftTop == Point.Empty || WorkspaceRightDown == Point.Empty)
             {
-                lblMsg.Text = "請先設定工作區域";
+                throw new Exception("請先設定工作區域");
             }
-            else
+            if (BaseMcvBox2DList.Count != RectangleGrids.tileCount)
             {
-                RectangleTiles myRetangleTiles;
+                throw new Exception("磁磚數量不正確，無法評分");
+            }
 
-                if (BaseMcvBox2DList.Count != RectangleGrids.tileCount)
+            RectangleTiles myRetangleTiles = new RectangleTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName, rankArea);
+            myRetangleTiles.Report.ScoringByVariance(TilesType.Rectangle,isTop);
+            if (myRetangleTiles.msg == RectangleTiles.error_TilePosition)
+            {
+                throw new Exception("磁磚位置有誤，請檢查");
+            }
+
+            //繪製磁磚
+            if (drawImage)
+            {
+                drawImageForShow();
+                MCvFont f = new MCvFont(Emgu.CV.CvEnum.FONT.CV_FONT_HERSHEY_COMPLEX, 1, 1);
+                for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
                 {
-                    lblMsg.Text = "磁磚數量不正確，無法評分";
-                    Console.WriteLine("磁磚數量不正確，無法評分");
-                }
-                else
-                {
-                    myRetangleTiles = new RectangleTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName, rankArea);
-                    if (myRetangleTiles.msg == RectangleTiles.error_TilePosition)
+                    for (int rowNum = 0; rowNum < RectangleGrids.ROW_COUNT; rowNum++)
                     {
-                        lblMsg.Text = "磁磚位置有誤，請檢查";
-                        Console.WriteLine("磁磚位置有誤，請檢查");
-                        return;
-                    }
-                    else
-                    {
-                        drawImageForShow();
-                        MCvFont f = new MCvFont(Emgu.CV.CvEnum.FONT.CV_FONT_HERSHEY_COMPLEX, 1, 1);
-                        for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
+                        if ((columnNum + rowNum) % 2 != 1)
                         {
-                            for (int rowNum = 0; rowNum < RectangleGrids.rowCount; rowNum++)
-                            {
-                                if ((columnNum + rowNum) % 2 != 1)
-                                {
-                                    string output = "(" + columnNum + "," + rowNum + ")";
-                                    ImageForShow.Draw(output, ref f, Point.Round(myRetangleTiles.Tiles[columnNum, rowNum].center), new Bgr(Color.Black));
-                                }
-                            }
+                            string output = "(" + columnNum + "," + rowNum + ")";
+                            ImageForShow.Draw(output, ref f, Point.Round(myRetangleTiles.Tiles[columnNum, rowNum].center), new Bgr(Color.Black));
                         }
-                        MessageBox.Show(myRetangleTiles.RankResult);
-                        #region 印出磁磚
-
-#if false
-                        using (StreamWriter sw = new StreamWriter("TilesLocation.txt"))
-                        {
-                            for (int column = 0; column < myRetangleTiles.Tiles.GetLength(0); column++)
-                            {
-                                for (int row = 0; row < myRetangleTiles.Tiles.GetLength(1); row++)
-                                {
-                                    if ((column + row) % 2 != 1)
-                                    {
-                                        string line = column.ToString() + "," + row.ToString();
-                                        line += "\t" + myRetangleTiles.Tiles[column, row].center.X.ToString();
-                                        line += "\t" + myRetangleTiles.Tiles[column, row].center.Y.ToString();
-                                        line += "\t" + myRetangleTiles.Tiles[column, row].angle.ToString();
-                                        sw.WriteLine(line);
-                                    }
-                                }
-                            }
-                            sw.Close();
-                        }
-                        Process.Start("TilesLocation.txt");
-#endif
-
-                        #endregion 印出磁磚
                     }
                 }
             }
+
+            //輸出磁磚位置
+            if (PRINT_TILES_LOCATION)
+            {
+                using (StreamWriter sw = new StreamWriter("TilesLocation.txt"))
+                {
+                    for (int column = 0; column < myRetangleTiles.Tiles.GetLength(0); column++)
+                    {
+                        for (int row = 0; row < myRetangleTiles.Tiles.GetLength(1); row++)
+                        {
+                            if ((column + row) % 2 != 1)
+                            {
+                                string line = column.ToString() + "," + row.ToString();
+                                line += "\t" + myRetangleTiles.Tiles[column, row].center.X.ToString();
+                                line += "\t" + myRetangleTiles.Tiles[column, row].center.Y.ToString();
+                                line += "\t" + myRetangleTiles.Tiles[column, row].angle.ToString();
+                                sw.WriteLine(line);
+                            }
+                        }
+                    }
+                    sw.Close();
+                }
+                Process.Start("TilesLocation.txt");
+            }
+
+            return myRetangleTiles.Report;
         }
 
         #region 定義工作區按鈕
@@ -1435,27 +1461,15 @@ namespace 磁磚辨識評分
         }
 
         /// <summary>取得磁磚邊緣灰度</summary>
-        private double getTileEdgeBrightness(Tile tempTile)
+        private double GetTileEdgeBrightness(Tile tempTile)
         {
-            double gray = 0.0;
-            foreach (PointF p in tempTile.TopEdge)
-            {
-                gray += BaseImage.GetGray(p.Y, p.X);
-            }
-            foreach (PointF p in tempTile.RightEdge)
-            {
-                gray += BaseImage.GetGray(p.Y, p.X);
-            }
-            foreach (PointF p in tempTile.DownEdge)
-            {
-                gray += BaseImage.GetGray(p.Y, p.X);
-            }
-            foreach (PointF p in tempTile.LeftEdge)
-            {
-                gray += BaseImage.GetGray(p.Y, p.X);
-            }
-            gray /= 80;
-            return gray;
+            return tempTile.AllEdge.Select(p => BaseImage.GetGray(p.X, p.Y)).Average();
+        }
+
+        /// <summary>取得點組平均亮度</summary>
+        private double GetBrightness(IEnumerable<PointF> pointSet)
+        {
+            return pointSet.Select(p => BaseImage.GetGray(p.X, p.Y)).Average();
         }
 
         /// <summary>自動旋轉磁磚</summary>
@@ -1502,20 +1516,20 @@ namespace 磁磚辨識評分
             else if (CounterclockwiseMaxGray > ClockwiseMaxGray && CounterclockwiseMaxGray > GrayNow)
             {
                 BaseMcvBox2DList[tileIndex] = tempCounterclockwiseTile;
-            } 
+            }
 #endif
             Dictionary<MCvBox2D, double> shiftBoxAndBrightness = new Dictionary<MCvBox2D, double>();
             MCvBox2D initialBox = BaseMcvBox2DList[tileIndex];
-            double initialBrightness = getTileEdgeBrightness(new Tile(initialBox));
+            double initialBrightness = GetTileEdgeBrightness(new Tile(initialBox));
             shiftBoxAndBrightness.Add(initialBox, initialBrightness);
-            for (float rotate = -0.01f;rotate <= 0.01f; rotate+=0.02f)
+            for (float rotate = -0.01f; rotate <= 0.01f; rotate += 0.02f)
             {
                 MCvBox2D tempBox = initialBox;
                 double tempMaxBrightness = initialBrightness;
-                for (int step = 1;; step++)
+                for (int step = 1; ; step++)
                 {
                     tempBox.angle += rotate * step;
-                    double tempBrightness = getTileEdgeBrightness(new Tile(tempBox));
+                    double tempBrightness = GetTileEdgeBrightness(new Tile(tempBox));
                     if (tempBrightness > tempMaxBrightness)
                     {
                         tempMaxBrightness = tempBrightness;
@@ -1541,7 +1555,7 @@ namespace 磁磚辨識評分
             while (true)
             {
                 Dictionary<MCvBox2D, double> shiftAndBrightness = new Dictionary<MCvBox2D, double>();
-                double initialBrightness = getTileEdgeBrightness(new Tile(BaseMcvBox2DList[tileIndex]));
+                double initialBrightness = GetTileEdgeBrightness(new Tile(BaseMcvBox2DList[tileIndex]));
                 MCvBox2D initialbox = BaseMcvBox2DList[tileIndex];
                 shiftAndBrightness.Add(initialbox, initialBrightness);
                 PointF[] directSet = new PointF[] {
@@ -1557,7 +1571,7 @@ namespace 磁磚辨識評分
                     {
                         tempBox.center.X += direct.X * step;
                         tempBox.center.Y += direct.Y * step;
-                        double tempBrightness = getTileEdgeBrightness(new Tile(tempBox));
+                        double tempBrightness = GetTileEdgeBrightness(new Tile(tempBox));
                         if (tempBrightness > tempMaxBrightness)
                         {
                             tempMaxBrightness = tempBrightness;
@@ -1672,8 +1686,83 @@ namespace 磁磚辨識評分
                         MessageBox.Show("調整磁磚時發生未預期的狀況");
                     }
                 }
-            } 
+            }
 #endif
+        }
+
+        /// <summary>自動調整磁磚大小</summary>
+        /// <param name="tileIndex">Index of the tile.</param>
+        private void AutoResizeTile(int tileIndex)
+        {
+            #region 本函式使用常數
+
+            //搜尋精度
+            const float adjustAmount = 0.2f;
+            //搜尋數量
+            const int searchStep = 20;
+
+            #endregion 本函式使用常數
+
+            Tile initialTile = new Tile(BaseMcvBox2DList[tileIndex]);
+
+            #region 準備調整向量
+
+            Dictionary<EdgeDirection, PointF> adjustUnitVector = new Dictionary<EdgeDirection, PointF>();
+            adjustUnitVector.Add(EdgeDirection.Top, new PointF(0, -adjustAmount));
+            adjustUnitVector.Add(EdgeDirection.Down, new PointF(0, adjustAmount));
+            adjustUnitVector.Add(EdgeDirection.Right, new PointF(adjustAmount, 0));
+            adjustUnitVector.Add(EdgeDirection.Left, new PointF(-adjustAmount, 0));
+
+            #endregion 準備調整向量
+
+            #region 準備資料庫
+
+            Dictionary<EdgeDirection, PointF[]> edgeData = new Dictionary<EdgeDirection, PointF[]>();
+            Dictionary<EdgeDirection, Dictionary<PointF, double>> brightnessDic = new Dictionary<EdgeDirection, Dictionary<PointF, double>>();
+            Dictionary<EdgeDirection, Dictionary<PointF, double>> brightnessDiffDic = new Dictionary<EdgeDirection, Dictionary<PointF, double>>();
+            Dictionary<EdgeDirection, PointF> selectedEdgeAdjust = new Dictionary<EdgeDirection, PointF>();
+            foreach (var direct in SmileLib.EnumTool.GetMembers<EdgeDirection>())
+            {
+                edgeData.Add(direct, initialTile.HalfEdge[direct]);
+                brightnessDic.Add(direct, new Dictionary<PointF, double>());
+                brightnessDiffDic.Add(direct, new Dictionary<PointF, double>());
+            }
+
+            #endregion 準備資料庫
+
+            #region 依四個方向處理四邊
+
+            foreach (var direct in SmileLib.EnumTool.GetMembers<EdgeDirection>())
+            {
+                PointF unitVector = adjustUnitVector[direct];
+                for (int step = -searchStep; step <= searchStep; step++)
+                {
+                    PointF vector = new PointF(step * unitVector.X, step * unitVector.Y);
+                    var adjustedPointFSet = from point in edgeData[direct]
+                                            select new PointF(
+                                                point.X + vector.X,
+                                                point.Y + vector.Y);
+                    double adjustedBrightness = GetBrightness(adjustedPointFSet);
+                    brightnessDic[direct].Add(vector, adjustedBrightness);
+                }
+                for (int step = 0; step < brightnessDic[direct].Count - 1; step++)
+                {
+                    PointF vectorA = brightnessDic[direct].ElementAt(step).Key;
+                    double brightnessA = brightnessDic[direct].ElementAt(step).Value;
+                    PointF vectorB = brightnessDic[direct].ElementAt(step + 1).Key;
+                    double brightnessB = brightnessDic[direct].ElementAt(step + 1).Value;
+                    PointF vectorAvg = myTool.AvgPointF(vectorA, vectorB);
+                    double brightnessDiff = brightnessB - brightnessA;
+                    brightnessDiffDic[direct].Add(vectorAvg, brightnessDiff);
+                }
+                PointF selectVector = brightnessDiffDic[direct].
+                    Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
+                selectedEdgeAdjust.Add(direct, selectVector);
+            }
+
+            Console.WriteLine();
+
+            #endregion 依四個方向處理四邊
         }
 
         private void FormUserDef_KeyUp(object sender, KeyEventArgs e)
@@ -1722,7 +1811,7 @@ namespace 磁磚辨識評分
             switch (theTilesType)
             {
                 case TilesType.Square:
-                    tempSize = new SizeF((float)(SquareGrids.tileLength * (double)nudPixelPerCentimeter.Value), (float)(SquareGrids.tileLength * (double)nudPixelPerCentimeter.Value));
+                    tempSize = new SizeF((float)(SquareGrids.TILE_LENGTH * (double)nudPixelPerCentimeter.Value), (float)(SquareGrids.TILE_LENGTH * (double)nudPixelPerCentimeter.Value));
                     break;
 
                 case TilesType.Rectangle:
@@ -1766,11 +1855,16 @@ namespace 磁磚辨識評分
 
         private void btnAutoTurnAllTile_Click(object sender, EventArgs e)
         {
+            AutoAdjustAllTile();
+        }
+
+        private void AutoAdjustAllTile()
+        {
             for (int i = 0; i < BaseMcvBox2DList.Count; i++)
             {
                 MCvBox2D temp = BaseMcvBox2DList[i];
-                temp.size.Width -= 1;
-                temp.size.Height -= 1;
+                temp.size.Width -= 2;
+                temp.size.Height -= 2;
                 BaseMcvBox2DList[i] = temp;
                 AutoShiftTile(i);
                 AutoTurnTile(i);
@@ -1778,9 +1872,10 @@ namespace 磁磚辨識評分
                 AutoTurnTile(i);
                 AutoShiftTile(i);
                 AutoTurnTile(i);
+                //AutoResizeTile(i);
                 temp = BaseMcvBox2DList[i];
-                temp.size.Width += 1;
-                temp.size.Height += 1;
+                temp.size.Width += 2;
+                temp.size.Height += 2;
                 BaseMcvBox2DList[i] = temp;
             }
             drawImageForShow();
@@ -1801,7 +1896,136 @@ namespace 磁磚辨識評分
             {
                 throw SmileLib.EnumTool.OutOfEnum<RankArea>();
             }
+        }
 
+        private void btnBatchScore_Click(object sender, EventArgs e)
+        {
+            ThreadStart ts = new ThreadStart(BatchScore);
+            Thread t = new Thread(ts);
+            t.Start();
+        }
+
+        /// <summary>針對辨識完成檔進行批次評分</summary>
+        private void BatchScore()
+        {
+            //取得評分的檔案列表
+            List<string> sourceFiles = GetBatchFiles(new string[] { ".data" });
+            SmileLib.MessageListBox myMessageListBox = new SmileLib.MessageListBox();
+            var result = myMessageListBox.ShowDialog(sourceFiles, "查找到的檔案");
+            if (result != DialogResult.OK)
+            {
+                return;
+            }
+            //舊版本列表
+            List<string> oldFiles = new List<string>();
+            //評分結果
+            List<string> dataLines = new List<string>();
+
+            //依據給予的網格類型，給予磁磚類型
+            Func<Grid, TilesType> GridToTileType = g =>
+             {
+                 switch (g)
+                 {
+                     case Grid.SquareGrid:
+                         return TilesType.Square;
+
+                     case Grid.RectangleGrid:
+                         return TilesType.Rectangle;
+
+                     default:
+                         throw SmileLib.EnumTool.OutOfEnum<Grid>();
+                 }
+             };
+
+            //依據給定的網格類型，給予評分方法
+            Func<Grid, Func<bool,bool,TilesReport>> ScoreSample = G =>
+             {
+                 switch (G)
+                 {
+                     case Grid.SquareGrid:
+                         return ScoreSquareSample;
+                     case Grid.RectangleGrid:
+                         return ScoreRectangleSample;
+                     default:
+                         throw SmileLib.EnumTool.OutOfEnum<Grid>();
+                 }
+             };
+
+            //對每個選定的檔案進行處理
+            foreach (var item in myMessageListBox.SelectResult)
+            {
+                fileName = item;
+                WorkspaceLeftTop = new Point(-1, -1);
+                WorkspaceRightDown = new Point(-1, -1);
+                OpenFile();
+                if (WorkspaceLeftTop == new Point(-1, -1) || WorkspaceRightDown == new Point(-1, -1))
+                {
+                    oldFiles.Add(item);
+                }
+
+                //進行正規化
+                TileRegularize(GridToTileType(WorkspaceType));
+
+                //自動微調位置
+                AutoAdjustAllTile();
+                //切換到評分上半部
+                Invoke(new Action(() => { rdbRankTop.Checked = true; }));
+                dataLines.Add(ScoreSample(WorkspaceType)(false,true).Record.ToDataLine());
+                //切換到評分下半部
+                Invoke(new Action(() => { rdbRankDown.Checked = true; }));
+                dataLines.Add(ScoreSample(WorkspaceType)(false,false).Record.ToDataLine());
+            }
+
+            //輸出結果
+            using (StreamWriter sw = new StreamWriter("BatchScoringResult.txt", false))
+            {
+                sw.WriteLine("受測者\t狀態\t區塊\t上下\t勾縫指標量\t平行指標量\t筆直指標量\t旋轉角指標量\t方林法殘差量\t勾縫分數\t平行分數\t筆直分數\t旋轉角分數\t綜合分數\t方林法分數");
+                foreach (var item in dataLines)
+                {
+                    sw.WriteLine(item);
+                }
+                sw.Close();
+            }
+            Process.Start("BatchScoringResult.txt");
+        }
+
+        /// <summary>取得目錄</summary>
+        private List<string> GetBatchFiles(string[] fileType)
+        {
+            /// <summary>資料夾選擇對話視窗</summary>
+            FolderSelect.FolderSelectDialog fsd = new FolderSelect.FolderSelectDialog();
+
+            List<string> fileList = new List<string>();
+            fsd.Title = "開啟目錄";
+            fsd.InitialDirectory = Environment.CurrentDirectory;
+            if (!fsd.ShowDialog(IntPtr.Zero))
+            {
+                return fileList;
+            }
+            try
+            {
+                IEnumerable<string> files = Directory.EnumerateFiles(fsd.FileName, "*", SearchOption.AllDirectories);
+                files = files.OrderBy(s => s);
+                if (files.Count() < 1)
+                {
+                    return fileList;
+                }
+                foreach (string file in files)
+                {
+                    string ext = Path.GetExtension(file);
+
+                    if (Array.FindIndex(fileType, s => s.Equals(ext)) == -1)
+                    {
+                        continue;
+                    }
+                    fileList.Add(file);
+                }
+            }
+            catch (Exception ee)
+            {
+                MessageBox.Show(ee.Message);
+            }
+            return fileList;
         }
     }
 

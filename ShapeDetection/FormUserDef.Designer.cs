@@ -44,6 +44,7 @@
             this.btnDimRectangleWorkingspace = new System.Windows.Forms.Button();
             this.btnGiveGradeRectangle = new System.Windows.Forms.Button();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.btnBatchScore = new System.Windows.Forms.Button();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.rdbRankDown = new System.Windows.Forms.RadioButton();
             this.rdbRankTop = new System.Windows.Forms.RadioButton();
@@ -108,7 +109,7 @@
             this.lbxTileList.ItemHeight = 12;
             this.lbxTileList.Location = new System.Drawing.Point(3, 129);
             this.lbxTileList.Name = "lbxTileList";
-            this.lbxTileList.Size = new System.Drawing.Size(154, 160);
+            this.lbxTileList.Size = new System.Drawing.Size(154, 64);
             this.lbxTileList.TabIndex = 6;
             this.lbxTileList.SelectedIndexChanged += new System.EventHandler(this.lbxTileList_SelectedIndexChanged);
             // 
@@ -135,7 +136,7 @@
             // lblTileCount
             // 
             this.lblTileCount.AutoSize = true;
-            this.lblTileCount.Location = new System.Drawing.Point(84, 300);
+            this.lblTileCount.Location = new System.Drawing.Point(84, 204);
             this.lblTileCount.Name = "lblTileCount";
             this.lblTileCount.Size = new System.Drawing.Size(41, 12);
             this.lblTileCount.TabIndex = 9;
@@ -143,7 +144,7 @@
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(5, 658);
+            this.btnSave.Location = new System.Drawing.Point(5, 562);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(75, 23);
             this.btnSave.TabIndex = 10;
@@ -157,7 +158,7 @@
             // 
             // btnLoad
             // 
-            this.btnLoad.Location = new System.Drawing.Point(103, 658);
+            this.btnLoad.Location = new System.Drawing.Point(103, 562);
             this.btnLoad.Name = "btnLoad";
             this.btnLoad.Size = new System.Drawing.Size(75, 23);
             this.btnLoad.TabIndex = 11;
@@ -193,7 +194,7 @@
             // lblMsg
             // 
             this.lblMsg.AutoSize = true;
-            this.lblMsg.Location = new System.Drawing.Point(127, 300);
+            this.lblMsg.Location = new System.Drawing.Point(127, 204);
             this.lblMsg.Name = "lblMsg";
             this.lblMsg.Size = new System.Drawing.Size(23, 12);
             this.lblMsg.TabIndex = 14;
@@ -234,6 +235,7 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.btnBatchScore);
             this.splitContainer1.Panel2.Controls.Add(this.groupBox3);
             this.splitContainer1.Panel2.Controls.Add(this.groupBox2);
             this.splitContainer1.Panel2.Controls.Add(this.groupBox1);
@@ -250,6 +252,16 @@
             this.splitContainer1.SplitterDistance = 851;
             this.splitContainer1.TabIndex = 15;
             // 
+            // btnBatchScore
+            // 
+            this.btnBatchScore.Location = new System.Drawing.Point(5, 591);
+            this.btnBatchScore.Name = "btnBatchScore";
+            this.btnBatchScore.Size = new System.Drawing.Size(75, 23);
+            this.btnBatchScore.TabIndex = 30;
+            this.btnBatchScore.Text = "批次評分";
+            this.btnBatchScore.UseVisualStyleBackColor = true;
+            this.btnBatchScore.Click += new System.EventHandler(this.btnBatchScore_Click);
+            // 
             // groupBox3
             // 
             this.groupBox3.Controls.Add(this.rdbRankDown);
@@ -258,7 +270,7 @@
             this.groupBox3.Controls.Add(this.btnGiveGradeSquare);
             this.groupBox3.Controls.Add(this.btnGiveGradeRectangle);
             this.groupBox3.Controls.Add(this.btnDimRectangleWorkingspace);
-            this.groupBox3.Location = new System.Drawing.Point(9, 549);
+            this.groupBox3.Location = new System.Drawing.Point(9, 453);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Size = new System.Drawing.Size(170, 100);
             this.groupBox3.TabIndex = 29;
@@ -293,7 +305,7 @@
             // 
             this.groupBox2.Controls.Add(this.ckbDrawBold);
             this.groupBox2.Controls.Add(this.ckbShowWeb);
-            this.groupBox2.Location = new System.Drawing.Point(3, 499);
+            this.groupBox2.Location = new System.Drawing.Point(3, 403);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(175, 44);
             this.groupBox2.TabIndex = 28;
@@ -332,7 +344,7 @@
             this.groupBox1.Controls.Add(this.nudPixelPerCentimeter);
             this.groupBox1.Controls.Add(this.btnSquareTileRegularize);
             this.groupBox1.Controls.Add(this.btnRectangleTileRegularize);
-            this.groupBox1.Location = new System.Drawing.Point(3, 324);
+            this.groupBox1.Location = new System.Drawing.Point(3, 228);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(176, 169);
             this.groupBox1.TabIndex = 27;
@@ -423,7 +435,7 @@
             // 
             // btnIdentification
             // 
-            this.btnIdentification.Location = new System.Drawing.Point(3, 295);
+            this.btnIdentification.Location = new System.Drawing.Point(3, 199);
             this.btnIdentification.Name = "btnIdentification";
             this.btnIdentification.Size = new System.Drawing.Size(75, 23);
             this.btnIdentification.TabIndex = 19;
@@ -434,7 +446,7 @@
             // lblEditMsg
             // 
             this.lblEditMsg.AutoSize = true;
-            this.lblEditMsg.Location = new System.Drawing.Point(84, 459);
+            this.lblEditMsg.Location = new System.Drawing.Point(84, 363);
             this.lblEditMsg.Name = "lblEditMsg";
             this.lblEditMsg.Size = new System.Drawing.Size(0, 12);
             this.lblEditMsg.TabIndex = 14;
@@ -506,6 +518,6 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.RadioButton rdbRankDown;
         private System.Windows.Forms.RadioButton rdbRankTop;
-
+        private System.Windows.Forms.Button btnBatchScore;
     }
 }

@@ -89,8 +89,15 @@
     <Reference Include="Emgu.Util">
       <HintPath>.\Emgu.Util.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="SampleFileLib">
+      <HintPath>D:\Projects\SampleFileLib\SampleFileLib\bin\Debug\SampleFileLib.dll</HintPath>
+    </Reference>
     <Reference Include="SmileLib">
-      <HintPath>..\..\..\Documents\Visual Studio 2013\Projects\SmileLib\SmileLib\bin\Release\SmileLib.dll</HintPath>
+      <HintPath>..\..\Projects\SmileLib\SmileLib\bin\Release\SmileLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -144,7 +151,6 @@
     </Compile>
     <Compile Include="工具class\ExtensionMethods.cs" />
     <Compile Include="工具class\FolderSelectDialog.cs" />
-    <Compile Include="工具class\GaussianRandom.cs" />
     <Compile Include="工具class\LoadFileTool.cs" />
     <Compile Include="工具class\myMath.cs" />
     <Compile Include="工具class\myStatistics.cs" />
@@ -152,6 +158,7 @@
     <Compile Include="工具class\Reflector.cs" />
     <Compile Include="工具class\report.cs" />
     <Compile Include="資料結構\Enumeration.cs" />
+    <Compile Include="資料結構\ErrMark.cs" />
     <Compile Include="資料結構\Grid.cs" />
     <Compile Include="工具class\Rank.cs" />
     <Compile Include="資料結構\IndentifyTileFileV2.cs" />
@@ -159,6 +166,7 @@
     <Compile Include="資料結構\IdentifyTileFile.cs" />
     <Compile Include="資料結構\RectangleGrids.cs" />
     <Compile Include="資料結構\SampleFile.cs" />
+    <Compile Include="資料結構\ScoreRecoed.cs" />
     <Compile Include="資料結構\SquareGrids.cs" />
     <Compile Include="資料結構\RectangleTiles.cs" />
     <Compile Include="資料結構\SquareTiles.cs" />
@@ -206,6 +214,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="packages.config" />
     <None Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

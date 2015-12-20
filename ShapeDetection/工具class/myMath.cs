@@ -39,18 +39,9 @@ static class myMath
         return Math.Sqrt(x * x + y * y);
     }
 
-    public static double GetDis<T>(T nub)
+    public static double GetDis<T>(T nub) where T : IConvertible
     {
-        double dis;
-        try
-        {
-            dis = double.Parse(nub.ToString());
-        }
-        catch (Exception)
-        {
-
-            throw;
-        }
+        double dis = Convert.ToDouble(nub);
         if (dis<0)
         {
             dis = 0;

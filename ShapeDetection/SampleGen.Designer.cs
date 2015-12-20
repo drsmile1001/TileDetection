@@ -88,6 +88,7 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.SFD = new System.Windows.Forms.SaveFileDialog();
+            this.button2 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -135,6 +136,7 @@
             this.splitContainer1.Panel2.Controls.Add(this.button1);
             this.splitContainer1.Panel2.Controls.Add(this.ckbDrawTexture);
             this.splitContainer1.Panel2.Controls.Add(this.btnReDraw);
+            this.splitContainer1.Panel2.Controls.Add(this.button2);
             this.splitContainer1.Panel2.Controls.Add(this.btnLoadSample);
             this.splitContainer1.Panel2.Controls.Add(this.groupBox1);
             this.splitContainer1.Panel2.Controls.Add(this.rdbGenTileTypeRectangle);
@@ -955,6 +957,16 @@
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
             this.toolStripStatusLabel1.Size = new System.Drawing.Size(0, 17);
             // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(8, 540);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(74, 23);
+            this.button2.TabIndex = 27;
+            this.button2.Text = "存檔";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.btnSaveSample_Click);
+            // 
             // SampleGen
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -1062,5 +1074,6 @@
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.RadioButton rdbRankDown;
         private System.Windows.Forms.RadioButton rdbRankTop;
+        private System.Windows.Forms.Button button2;
     }
 }

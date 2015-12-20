@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
+using System;
+using 磁磚辨識評分;
 
-internal class report
+internal class TilesReport
 {
     /// <summary>旋轉角標準差</summary>
     public double AngleSD = 0;
@@ -54,9 +52,12 @@ internal class report
     private string fileName;
     private List<string> stringsToReport = new List<string>();
 
+    /// <summary>評分存放物件</summary>
+    public ScoreRecord Record { get; private set; }
+
     /// <summary>建構式</summary>
     /// <param name="title">檔名</param>
-    public report(string fileName)
+    public TilesReport(string fileName)
     {
         this.fileName = Path.GetDirectoryName(fileName) + "\\" + Path.GetFileNameWithoutExtension(fileName);
     }
@@ -87,10 +88,10 @@ internal class report
         {
             string[] FileInfo = Path.GetFileName(fileName).Split('_');
 
-            if (FileInfo.Length == 4)
+            if (FileInfo.Length == 3)
             {
                 sw.WriteLine("受測者\t受測狀態\t區塊\t水平勾縫標準差\t垂直勾縫標準差\t水平傾角標準差\t垂直傾角標準差\t平均Y方向離差\t平均X方向離差\t旋轉角標準差\t3M角Y方向離差\t3M角X方向離差\t角Y方向離差\t角X方向離差");
-                dataLine = FileInfo[0] + FileInfo[1] + "\t" + FileInfo[2] + "\t" + FileInfo[3] + "\t";
+                dataLine = FileInfo[0] + "\t" + FileInfo[1] + "\t" + FileInfo[2] + "\t";
             }
             else
             {
@@ -130,6 +131,7 @@ internal class report
 
     /// <summary>正方磚分數斜率</summary>
     private ScoreSlope SquareTileSS = new ScoreSlope(-70.3322140939373, -502.415943384373, -184.165325702495, -86.6152559413475, -140);
+
 
     /// <summary>二丁掛分數斜率</summary>
     private ScoreSlope RectangleTileSS = new ScoreSlope(-63.6634155371259, -170.958735555665, -453.596710992925, -336.349870960398, -138.70734257);
@@ -176,34 +178,53 @@ internal class report
     #endregion 各面向誤差量門檻
 
     /// <summary>計算分數</summary>
-    public string ScoringByVariance(TilesType theTilesType)
+    public string ScoringByVariance(TilesType theTilesType,bool isTop = true)
     {
-        ScoreSlope selectSS = theTilesType == TilesType.Square? SquareTileSS:RectangleTileSS;
-        double AvgGapSD = (GapHSD + GapVSD) / 2;
-        double AvgLineAngleSD = (RowAngleSD + ColumnAngleSD) / 2;
-        double AvgResidual = (RowResidualAvg + ColumnResidualAvg) / 2;
-        double ResultAngleSD = AngleSD;
+        Record = ScoreRecordByVariance(theTilesType,isTop);
+        //output += "\t林的分數(修):\t" + scoreOfLinM.ToString("00.0");
+        //output += "\t角Y方向離差:\t" + CornerResidualY.ToString();
+        //output += "\t角X方向離差:\t" + CornerResidualX.ToString();
+        return Record.ToScoreLine(); 
+    }
+
+    /// <summary>由目前資料計算分數，並輸出分數物件</summary>
+    /// <param name="theTilesType"></param>
+    /// <returns></returns>
+    private ScoreRecord ScoreRecordByVariance(TilesType theTilesType,bool isTop = true)
+    {
+        ScoreRecord record = new ScoreRecord();
+
+        //處理檔名
+        string[] FileInfo = Path.GetFileName(fileName).Split('_');
+
+        if (FileInfo.Length == 3)
+        {
+            record.Subject = FileInfo[0];
+            record.SubjectState = FileInfo[1];
+            record.RegionId = Convert.ToInt32(FileInfo[2]);
+            record.TopDown = isTop ? "上" : "下";
+        }
+
+        ScoreSlope selectSS = theTilesType == TilesType.Square ? SquareTileSS : RectangleTileSS;
+        record.GI = (GapHSD + GapVSD) / 2;
+        record.LPI = (RowAngleSD + ColumnAngleSD) / 2;
+        record.LSI = (RowResidualAvg + ColumnResidualAvg) / 2;
+        record.AI = AngleSD;
         double scoreOfGap = 0;
         double scoreOfParallel = 0;
         double scoreOfStraight = 0;
         double scoreOfAngle = 0;
-        double LinResidualAvg = (ResidualAvgX3m +ResidualAvgY3m ) /2;
+        double LinResidualAvg = (ResidualAvgX3m + ResidualAvgY3m) / 2;
         double scoreOfLin = 100 - 20 * LinResidualAvg;
-        double scoreOfLinM = 100 + selectSS.FangAndLing * ((CornerResidualX+CornerResidualY)/2);
-        CalScore(theTilesType, AvgGapSD, AvgLineAngleSD, AvgResidual
+        record.FangLingIndex = LinResidualAvg;
+        double scoreOfLinM = 100 + selectSS.FangAndLing * ((CornerResidualX + CornerResidualY) / 2);
+        CalScore(theTilesType, record.GI, record.LPI, record.LSI
             , ref scoreOfGap, ref scoreOfParallel, ref scoreOfStraight, ref scoreOfAngle);
-        string output = "";
-        output += fileName;
-        output += "\t勾縫分數:\t" + scoreOfGap.ToString("00.0");
-        output += "\t平行分數:\t" + scoreOfParallel.ToString("00.0");
-        output += "\t筆直分數:\t" + scoreOfStraight.ToString("00.0");
-        output += "\t轉角分數:\t" + scoreOfAngle.ToString("00.0");
-        output += "\t綜合分數:\t" + ((scoreOfGap +scoreOfParallel+scoreOfStraight+ scoreOfAngle) / 4).ToString("00.0");
-        output += "\t林的分數:\t" + scoreOfLin.ToString("00.0");
-        //output += "\t林的分數(修):\t" + scoreOfLinM.ToString("00.0");
-        //output += "\t角Y方向離差:\t" + CornerResidualY.ToString();
-        //output += "\t角X方向離差:\t" + CornerResidualX.ToString();
-        return output;
+        record.GS = scoreOfGap;
+        record.LPS = scoreOfParallel;
+        record.LSS = scoreOfStraight;
+        record.AS = scoreOfAngle;
+        return record;
     }
 
     private void CalScore(TilesType theTilesType, double AvgGapSD, double AvgLineAngleSD, double AvgResidual, ref double scoreOfGap, ref double scoreOfParallel, ref double scoreOfStraight, ref double scoreOfAngle)

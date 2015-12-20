@@ -1,14 +1,14 @@
-//----------------------------------------------------------------------------
+ï»¿//----------------------------------------------------------------------------
 //  Copyright (C) 2004-2013 by EMGU. All rights reserved.       
 //----------------------------------------------------------------------------
-
+//
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Emgu.CV;
 
-namespace ºÏ¿j¿ëÃÑµû¤À
+namespace ç£ç£šè¾¨è­˜è©•åˆ†
 {
     public static class Program
     {
@@ -22,7 +22,7 @@ namespace ºÏ¿j¿ëÃÑµû¤À
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            if (MessageBox.Show("¬O§_¶i¦æ¿ëÃÑ³B²z¡H", "°õ¦æ¶µ¥Ø", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            if (MessageBox.Show("æ˜¯å¦é€²è¡Œè¾¨è­˜è™•ç†ï¼Ÿ", "åŸ·è¡Œé …ç›®", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
                 myUserDefForm = new FormUserDef();
                 Application.Run(myUserDefForm);

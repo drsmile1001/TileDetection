@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Windows.Forms;
+using SmileLib;
 
 namespace 磁磚辨識評分
 {
@@ -81,7 +82,8 @@ namespace 磁磚辨識評分
                 Point RDPoint = LT.conerLT.ToPoint();
                 RDPoint.Offset((int)(50 * 12 * pixelpermm), (int)(50 * 12 * pixelpermm));
                 SquareGrids myGrid = new SquareGrids(RDPoint, LT.conerLT.ToPoint());
-                result = SquareTiles.RankSquareTile(fullFilePath, genTiles, myGrid, rankArea);
+                ErrMark currentErrMark = new ErrMark();
+                result = SquareTiles.RankSquareTile(fullFilePath, genTiles, myGrid, rankArea,ref currentErrMark).ScoringByVariance(TilesType.Square);
                 toolStripStatusLabel1.Text = result;
             }
             else
@@ -90,7 +92,7 @@ namespace 磁磚辨識評分
                 Point RDPoint = LT.conerLT.ToPoint();
                 RDPoint.Offset((int)(RectangleGrids.Length * pixelpermm), (int)(RectangleGrids.Width * pixelpermm));
                 RectangleGrids myGrid = new RectangleGrids(RDPoint, LT.conerLT.ToPoint());
-                result = RectangleTiles.rankRectangleTiles(fullFilePath, genTiles, myGrid, rankArea);
+                result = RectangleTiles.rankRectangleTiles(fullFilePath, genTiles, myGrid, rankArea).ScoringByVariance(TilesType.Rectangle);
                 toolStripStatusLabel1.Text = result;
             }
             return result;
@@ -180,8 +182,8 @@ namespace 磁磚辨識評分
 
                     #region 產生每一行、每一列的間距
 
-                    rowErr = new float[SquareGrids.rowCount];
-                    columnErr = new float[SquareGrids.columnCount];
+                    rowErr = new float[SquareGrids.ROW_COUNT];
+                    columnErr = new float[SquareGrids.COLUMN_COUNT];
 
                     for (int index = 0; index < rowErr.Length; index++)
                     {
@@ -204,12 +206,12 @@ namespace 磁磚辨識評分
 
                     genTiles = new MCvBox2D[12, 12];
 
-                    for (int column = 0; column < SquareGrids.columnCount; column++)
+                    for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                     {
                         TileCenterPosition.Y = 0f;
                         TileCenterPosition.X += columnErr[column];
 
-                        for (int row = 0; row < SquareGrids.rowCount; row++)
+                        for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
                         {
                             TileCenterPosition.Y += rowErr[row];
 
@@ -225,7 +227,7 @@ namespace 磁磚辨識評分
 
                     #region 產生每一行、每一列的間距
 
-                    rowErr = new float[RectangleGrids.rowCount];
+                    rowErr = new float[RectangleGrids.ROW_COUNT];
                     columnErr = new float[RectangleGrids.columnCount];
 
                     for (int index = 0; index < rowErr.Length; index++)
@@ -247,14 +249,14 @@ namespace 磁磚辨識評分
 
                     #region 依據間距產生磁磚
 
-                    genTiles = new MCvBox2D[RectangleGrids.columnCount, RectangleGrids.rowCount];
+                    genTiles = new MCvBox2D[RectangleGrids.columnCount, RectangleGrids.ROW_COUNT];
 
                     for (int column = 0; column < RectangleGrids.columnCount; column++)
                     {
                         TileCenterPosition.Y = 0f;
                         TileCenterPosition.X += columnErr[column];
 
-                        for (int row = 0; row < RectangleGrids.rowCount; row++)
+                        for (int row = 0; row < RectangleGrids.ROW_COUNT; row++)
                         {
                             TileCenterPosition.Y += rowErr[row];
 
@@ -285,8 +287,8 @@ namespace 磁磚辨識評分
 
                     #region 產生每一行、每一列的角度
 
-                    rowAngle = new float[SquareGrids.rowCount];
-                    columnAngle = new float[SquareGrids.columnCount];
+                    rowAngle = new float[SquareGrids.ROW_COUNT];
+                    columnAngle = new float[SquareGrids.COLUMN_COUNT];
 
                     for (int index = 0; index < rowAngle.Length; index++)
                     {
@@ -307,34 +309,34 @@ namespace 磁磚辨識評分
 
                     #region 取得每行每列的平均座標(中心線的X,Y值)
 
-                    avgColumn = new float[SquareGrids.columnCount];
-                    avgRow = new float[SquareGrids.rowCount];
+                    avgColumn = new float[SquareGrids.COLUMN_COUNT];
+                    avgRow = new float[SquareGrids.ROW_COUNT];
 
-                    for (int column = 0; column < SquareGrids.columnCount; column++)
+                    for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                     {
                         avgColumn[column] = 0;
-                        for (int row = 0; row < SquareGrids.rowCount; row++)
+                        for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
                         {
                             avgColumn[column] += genTiles[column, row].center.X;
                         }
-                        avgColumn[column] /= SquareGrids.rowCount;
+                        avgColumn[column] /= SquareGrids.ROW_COUNT;
                     }
 
-                    for (int row = 0; row < SquareGrids.rowCount; row++)
+                    for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
                     {
                         avgRow[row] = 0;
-                        for (int column = 0; column < SquareGrids.columnCount; column++)
+                        for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                         {
                             avgRow[row] += genTiles[column, row].center.Y;
                         }
-                        avgRow[row] /= SquareGrids.columnCount;
+                        avgRow[row] /= SquareGrids.COLUMN_COUNT;
                     }
 
                     #endregion 取得每行每列的平均座標(中心線的X,Y值)
 
-                    for (int column = 0; column < SquareGrids.columnCount; column++)
+                    for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                     {
-                        for (int row = 0; row < SquareGrids.rowCount; row++)
+                        for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
                         {
                             #region 產生該行列磁磚該移動的量
 
@@ -370,7 +372,7 @@ namespace 磁磚辨識評分
 
                     #region 產生每一行、每一列的角度
 
-                    rowAngle = new float[RectangleGrids.rowCount];
+                    rowAngle = new float[RectangleGrids.ROW_COUNT];
                     columnAngle = new float[RectangleGrids.columnCount];
 
                     for (int index = 0; index < rowAngle.Length; index++)
@@ -393,19 +395,19 @@ namespace 磁磚辨識評分
                     #region 取得每行每列的平均座標(中心線的X,Y值)
 
                     avgColumn = new float[RectangleGrids.columnCount];
-                    avgRow = new float[RectangleGrids.rowCount];
+                    avgRow = new float[RectangleGrids.ROW_COUNT];
 
                     for (int column = 0; column < RectangleGrids.columnCount; column++)
                     {
                         avgColumn[column] = 0;
-                        for (int row = 0; row < RectangleGrids.rowCount; row++)
+                        for (int row = 0; row < RectangleGrids.ROW_COUNT; row++)
                         {
                             avgColumn[column] += genTiles[column, row].center.X;
                         }
-                        avgColumn[column] /= RectangleGrids.rowCount;
+                        avgColumn[column] /= RectangleGrids.ROW_COUNT;
                     }
 
-                    for (int row = 0; row < RectangleGrids.rowCount; row++)
+                    for (int row = 0; row < RectangleGrids.ROW_COUNT; row++)
                     {
                         avgRow[row] = 0;
                         for (int column = 0; column < RectangleGrids.columnCount; column++)
@@ -419,7 +421,7 @@ namespace 磁磚辨識評分
 
                     for (int column = 0; column < RectangleGrids.columnCount; column++)
                     {
-                        for (int row = 0; row < RectangleGrids.rowCount; row++)
+                        for (int row = 0; row < RectangleGrids.ROW_COUNT; row++)
                         {
                             #region 產生該行列磁磚該移動的量
 
@@ -465,7 +467,8 @@ namespace 磁磚辨識評分
 
                     #region 調整一行磁磚當中，x的變量
 
-                    for (int column = 0; column < SquareGrids.columnCount; column++)
+                    #if false
+		for (int column = 0; column < SquareGrids.columnCount; column++)
                     {
                         float SumXErr = 0;
                         for (int row = 0; row < SquareGrids.rowCount; row++)
@@ -478,13 +481,31 @@ namespace 磁磚辨識評分
                         {
                             genTiles[column, row].center.X -= SumXErr / SquareGrids.rowCount;
                         }
+                    }  
+	#endif
+                    float XErr = (float)(gr.NextGaussian() / 2 * (double)nudTileDisX.Value * pixelpermm);
+                    for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
+                    {
+                        for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
+                        {
+                            if (row % 2 == 0)
+                            {
+                                genTiles[column, row].center.X += XErr;
+                            }
+                            else
+                            {
+                                genTiles[column, row].center.X -= XErr;
+                            }
+                            
+                        }
                     }
 
                     #endregion 調整一行磁磚當中，x的變量
 
                     #region 調整一列磁磚當中，y的變量
 
-                    for (int row = 0; row < SquareGrids.rowCount; row++)
+                    #if false
+		for (int row = 0; row < SquareGrids.rowCount; row++)
                     {
                         float SumYErr = 0;
                         for (int column = 0; column < SquareGrids.columnCount; column++)
@@ -497,14 +518,36 @@ namespace 磁磚辨識評分
                             genTiles[column, row].center.X -= SumYErr / SquareGrids.columnCount;
                         {
                         }
-                    }
+                    }  
+	#endif
+                    float YErr = (float)(gr.NextGaussian() / 2 * (double)nudTileDisY.Value * pixelpermm);
+                    for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
+                    {
+                        
+                        for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
+                        {
+
+
+                            if (column % 2 == 0)
+                            {
+                                genTiles[column, row].center.Y += YErr;  
+                            }
+                            else
+                            {
+                                genTiles[column, row].center.Y -= YErr;  
+                            }
+
+                        }
+                        
+                    } 
 
                     #endregion 調整一列磁磚當中，y的變量
 
                     break;
 
                 case TilesType.Rectangle:
-
+#if false
+		
                     #region 調整一行磁磚當中，x的變量
 
                     for (int column = 0; column < RectangleGrids.columnCount; column++)
@@ -542,7 +585,8 @@ namespace 磁磚辨識評分
                     }
 
                     #endregion 調整一列磁磚當中，y的變量
-
+ 
+	#endif
                     break;
 
                 default:
@@ -564,9 +608,9 @@ namespace 磁磚辨識評分
 
                     #region 將整個磁磚搬回中心
 
-                    for (int column = 0; column < SquareGrids.columnCount; column++)
+                    for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                     {
-                        for (int row = 0; row < SquareGrids.rowCount / 2; row++)
+                        for (int row = 0; row < SquareGrids.ROW_COUNT / 2; row++)
                         {
                             TilesCenterX += genTiles[column, row].center.X;
                             TilesCenterY += genTiles[column, row].center.Y;
@@ -577,9 +621,9 @@ namespace 磁磚辨識評分
                     TilesCenterXErr = TilesCenterX - SquareDrawZone.Width / 2;
                     TilesCenterYErr = TilesCenterY - SquareDrawZone.Height / 2;
 
-                    for (int column = 0; column < SquareGrids.columnCount; column++)
+                    for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                     {
-                        for (int row = 0; row < SquareGrids.rowCount; row++)
+                        for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
                         {
                             genTiles[column, row].center.X -= TilesCenterXErr;
                             genTiles[column, row].center.Y -= TilesCenterYErr;
@@ -596,7 +640,7 @@ namespace 磁磚辨識評分
 
                     for (int column = 0; column < RectangleGrids.columnCount; column++)
                     {
-                        for (int row = 0; row < RectangleGrids.rowCount / 2; row++)
+                        for (int row = 0; row < RectangleGrids.ROW_COUNT / 2; row++)
                         {
                             if ((row + column) % 2 != 0)
                             {
@@ -613,7 +657,7 @@ namespace 磁磚辨識評分
 
                     for (int column = 0; column < RectangleGrids.columnCount; column++)
                     {
-                        for (int row = 0; row < RectangleGrids.rowCount; row++)
+                        for (int row = 0; row < RectangleGrids.ROW_COUNT; row++)
                         {
                             if ((row + column) % 2 != 0)
                             {
@@ -646,9 +690,9 @@ namespace 磁磚辨識評分
 
                     if (rdbAngleBaseUp.Checked)
                     {
-                        for (int column = 0; column < SquareGrids.columnCount; column++)
+                        for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                         {
-                            for (int row = 0; row < SquareGrids.rowCount; row++)
+                            for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
                             {
                                 genTiles[column, row].angle = 0f;
                             }
@@ -656,9 +700,9 @@ namespace 磁磚辨識評分
                     }
                     else if (rdbAngleBaseRow.Checked)
                     {
-                        for (int column = 0; column < SquareGrids.columnCount; column++)
+                        for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                         {
-                            for (int row = 0; row < SquareGrids.rowCount; row++)
+                            for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
                             {
                                 genTiles[column, row].angle = (float)myMath.MathDeg2DrawingDeg(theTrendLine.Horizontal[row] + 90f);
                             }
@@ -666,9 +710,9 @@ namespace 磁磚辨識評分
                     }
                     else if (rdbAngleBaseColumn.Checked)
                     {
-                        for (int column = 0; column < SquareGrids.columnCount; column++)
+                        for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                         {
-                            for (int row = 0; row < SquareGrids.rowCount; row++)
+                            for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
                             {
                                 genTiles[column, row].angle
                                     = (float)(myMath.MathDeg2DrawingDeg(theTrendLine.Vertical[column]));
@@ -677,9 +721,9 @@ namespace 磁磚辨識評分
                     }
                     else if (rdbAngleBaseCRAvg.Checked)
                     {
-                        for (int column = 0; column < SquareGrids.columnCount; column++)
+                        for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                         {
-                            for (int row = 0; row < SquareGrids.rowCount; row++)
+                            for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
                             {
                                 genTiles[column, row].angle
                                     = (float)myMath.MathDeg2DrawingDeg((theTrendLine.Horizontal[row] + 90f) / 2
@@ -701,7 +745,7 @@ namespace 磁磚辨識評分
                     {
                         for (int column = 0; column < RectangleGrids.columnCount; column++)
                         {
-                            for (int row = 0; row < RectangleGrids.rowCount; row++)
+                            for (int row = 0; row < RectangleGrids.ROW_COUNT; row++)
                             {
                                 genTiles[column, row].angle = 0f;
                             }
@@ -711,7 +755,7 @@ namespace 磁磚辨識評分
                     {
                         for (int column = 0; column < RectangleGrids.columnCount; column++)
                         {
-                            for (int row = 0; row < RectangleGrids.rowCount; row++)
+                            for (int row = 0; row < RectangleGrids.ROW_COUNT; row++)
                             {
                                 genTiles[column, row].angle = (float)myMath.MathDeg2DrawingDeg(theTrendLine.Horizontal[row] + 90f);
                             }
@@ -721,7 +765,7 @@ namespace 磁磚辨識評分
                     {
                         for (int column = 0; column < RectangleGrids.columnCount; column++)
                         {
-                            for (int row = 0; row < RectangleGrids.rowCount; row++)
+                            for (int row = 0; row < RectangleGrids.ROW_COUNT; row++)
                             {
                                 genTiles[column, row].angle
                                     = (float)(myMath.MathDeg2DrawingDeg(theTrendLine.Vertical[column]));
@@ -732,7 +776,7 @@ namespace 磁磚辨識評分
                     {
                         for (int column = 0; column < RectangleGrids.columnCount; column++)
                         {
-                            for (int row = 0; row < RectangleGrids.rowCount; row++)
+                            for (int row = 0; row < RectangleGrids.ROW_COUNT; row++)
                             {
                                 genTiles[column, row].angle
                                     = (float)myMath.MathDeg2DrawingDeg((theTrendLine.Horizontal[row] + 90f) / 2
@@ -760,9 +804,9 @@ namespace 磁磚辨識評分
 
                     #region 處理整個圖版
                     Random rd = new Random();
-                    for (int column = 0; column < SquareGrids.columnCount; column++)
+                    for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                     {
-                        for (int row = 0; row < SquareGrids.rowCount; row++)
+                        for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
                         {
                             
                             double angle = -(double)nudTileAngle.Value + gr.NextGaussian() / 2 * (double)nudTileAngleErr.Value;
@@ -776,12 +820,12 @@ namespace 磁磚辨識評分
 
                     #region 處理行方向的
 
-                    for (int column = 0; column < SquareGrids.columnCount; column++)
+                    for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                     {
                         double angle = -(double)nudColumnTileAngle.Value + gr.NextGaussian() / 2 * (double)nudColumnTileAngleErr.Value;
                         //float columnAngleErr = -(float)nudColumnTileAngle.Value
                         //   + (float)myMath.randNumber((double)nudColumnTileAngleErr.Value * -1, (double)nudColumnTileAngleErr.Value);
-                        for (int row = 0; row < SquareGrids.rowCount; row++)
+                        for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
                         {
                             genTiles[column, row].angle += (float)angle;
                         }
@@ -791,12 +835,12 @@ namespace 磁磚辨識評分
 
                     #region 處理列方向的
 
-                    for (int row = 0; row < SquareGrids.rowCount; row++)
+                    for (int row = 0; row < SquareGrids.ROW_COUNT; row++)
                     {
                         double angle = -(double)nudRowTileAngle.Value + gr.NextGaussian() / 2 * (double)nudRowTileAngleErr.Value;
                         //float rowAngleErr = -(float)nudRowTileAngle.Value
                         //    + (float)myMath.randNumber((double)nudRowTileAngleErr.Value * -1, (double)nudRowTileAngleErr.Value);
-                        for (int column = 0; column < SquareGrids.columnCount; column++)
+                        for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                         {
                             genTiles[column, row].angle += (float)angle;
                         }
@@ -812,7 +856,7 @@ namespace 磁磚辨識評分
 
                     for (int column = 0; column < RectangleGrids.columnCount; column++)
                     {
-                        for (int row = 0; row < RectangleGrids.rowCount; row++)
+                        for (int row = 0; row < RectangleGrids.ROW_COUNT; row++)
                         {
                             double angle = -(double)nudTileAngle.Value + gr.NextGaussian() / 2 * (double)nudTileAngleErr.Value;
                             genTiles[column, row].angle += (float)angle;
@@ -829,7 +873,7 @@ namespace 磁磚辨識評分
                         double angle = -(double)nudColumnTileAngle.Value + gr.NextGaussian() / 2 * (double)nudColumnTileAngleErr.Value;
                         //float columnAngleErr = -(float)nudColumnTileAngle.Value
                         //   + (float)myMath.randNumber((double)nudColumnTileAngleErr.Value * -1, (double)nudColumnTileAngleErr.Value);
-                        for (int row = 0; row < RectangleGrids.rowCount; row++)
+                        for (int row = 0; row < RectangleGrids.ROW_COUNT; row++)
                         {
                             genTiles[column, row].angle += (float)angle;
                         }
@@ -839,7 +883,7 @@ namespace 磁磚辨識評分
 
                     #region 處理列方向的
 
-                    for (int row = 0; row < RectangleGrids.rowCount; row++)
+                    for (int row = 0; row < RectangleGrids.ROW_COUNT; row++)
                     {
                         double angle = -(double)nudRowTileAngle.Value + gr.NextGaussian() / 2 * (double)nudRowTileAngleErr.Value;
                         //float rowAngleErr = -(float)nudRowTileAngle.Value
@@ -881,9 +925,9 @@ namespace 磁磚辨識評分
             {
                 case TilesType.Square:
                     DrawZone = new Image<Bgr, byte>(SquareDrawZone.Width, SquareDrawZone.Height, new Bgr(Color.DarkBlue));
-                    for (int column = 0; column < SquareGrids.columnCount; column++)
+                    for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
                     {
-                        for (int row = 0; row < SquareGrids.rowCount / 2; row++)
+                        for (int row = 0; row < SquareGrids.ROW_COUNT / 2; row++)
                         {
                             if (ckbDrawTexture.Checked)
                             {
@@ -926,7 +970,7 @@ namespace 磁磚辨識評分
                     DrawZone = new Image<Bgr, byte>(RectangleDrawZone.Width, RectangleDrawZone.Height, new Bgr(Color.DarkBlue));
                     for (int column = 0; column < RectangleGrids.columnCount; column++)
                     {
-                        for (int row = 0; row < RectangleGrids.rowCount / 2; row++)
+                        for (int row = 0; row < RectangleGrids.ROW_COUNT / 2; row++)
                         {
                             if ((column + row) % 2 == 0)
                             {
@@ -1002,6 +1046,7 @@ namespace 磁磚辨識評分
         {
             loadSampleWithDialog();
             showSample();
+            RankSample("");
         }
 
         #region 存讀檔
@@ -1023,6 +1068,7 @@ namespace 磁磚辨識評分
                 ImageName = fileName + ".png";
             }
             SampleFile savefile = new SampleFile(genTiles, genTilesType);
+
             BinaryFormatter formatter = new BinaryFormatter();
 
             Stream output = File.Create(dataName);
@@ -1067,10 +1113,21 @@ namespace 磁磚辨識評分
             if (inputFile != LoadFileTool.Fail)
             {
                 LoadSampleFile((SampleFile)inputFile);
+                
                 return;
             }
 
             #endregion 嘗試以SampleFile讀入檔案
+
+            #region 嘗試使用SampleFilelib讀入檔案
+            inputFile = LoadFileTool.TryLoadFile<SampleFilelib.SampleFile>(filename);
+            if (inputFile != LoadFileTool.Fail)
+            {
+                LoadSampleFile((SampleFilelib.SampleFile)inputFile);
+
+                return;
+            }
+            #endregion
 
             #region 嘗試以IdentifyTileFileV2讀入檔案
 
@@ -1095,7 +1152,40 @@ namespace 磁磚辨識評分
                     genTiles[i, j] = tempTileFile.boxs[i, j].getMcvBox2D();
                 }
             }
-            genTilesType = tempTileFile.TilesType;
+            if (tempTileFile.TilesType == TilesType.Square)
+            {
+                genTilesType = TilesType.Square;
+            }
+            else
+            {
+                genTilesType = TilesType.Rectangle;
+            }
+            
+
+            SetDrawZone();
+        }
+
+        /// <summary>讀取SampleFilelib檔案類型</summary>
+        private void LoadSampleFile(SampleFilelib.SampleFile tempTileFile)
+        {
+            genTiles = new MCvBox2D[tempTileFile.boxs.GetLength(0), tempTileFile.boxs.GetLength(1)];
+            for (int i = 0; i < tempTileFile.boxs.GetLength(0); i++)
+            {
+                for (int j = 0; j < tempTileFile.boxs.GetLength(1); j++)
+                {
+                    genTiles[i, j] = tempTileFile.boxs[i, j].getMcvBox2D();
+                }
+            }
+            if (tempTileFile.TilesType == SampleFilelib.TilesType.Square)
+            {
+                genTilesType = TilesType.Square;
+            }
+            else
+            {
+                genTilesType = TilesType.Rectangle;
+            }
+
+
             SetDrawZone();
         }
 
@@ -1159,8 +1249,8 @@ namespace 磁磚辨識評分
             #region 移動整個磁磚到中心
 
             PointF tilesCenter = new PointF(0, 0);
-            int columnCount = (tempTileFile.WorkAreaType == Grid.SquareGrid) ? SquareGrids.columnCount : RectangleGrids.columnCount;
-            int rowCount = (tempTileFile.WorkAreaType == Grid.SquareGrid) ? SquareGrids.rowCount : RectangleGrids.rowCount;
+            int columnCount = (tempTileFile.WorkAreaType == Grid.SquareGrid) ? SquareGrids.COLUMN_COUNT : RectangleGrids.columnCount;
+            int rowCount = (tempTileFile.WorkAreaType == Grid.SquareGrid) ? SquareGrids.ROW_COUNT : RectangleGrids.ROW_COUNT;
 
             for (int column = 0; column < columnCount; column++)
             {

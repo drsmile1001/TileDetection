@@ -16,13 +16,13 @@ static class Rank
         {
             case TilesType.Square:
                 TrendLine SquareTrendLine
-                    = new TrendLine(SquareGrids.columnCount, SquareGrids.rowCount);
+                    = new TrendLine(SquareGrids.COLUMN_COUNT, SquareGrids.ROW_COUNT);
                 #region 水平趨勢線
-                for (int rowNum = 0; rowNum < SquareGrids.rowCount; rowNum++)
+                for (int rowNum = 0; rowNum < SquareGrids.ROW_COUNT; rowNum++)
                 {
-                    double[] Xdata = new double[SquareGrids.columnCount];
-                    double[] Ydata = new double[SquareGrids.columnCount];
-                    for (int columnNum = 0; columnNum < SquareGrids.columnCount; columnNum++)
+                    double[] Xdata = new double[SquareGrids.COLUMN_COUNT];
+                    double[] Ydata = new double[SquareGrids.COLUMN_COUNT];
+                    for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT; columnNum++)
                     {
                         Xdata[columnNum] = Tiles[columnNum, rowNum].center.X;
                         Ydata[columnNum] = Tiles[columnNum, rowNum].center.Y * -1;
@@ -40,11 +40,11 @@ static class Rank
                 }
                 #endregion
                 #region 垂直趨勢線
-                for (int columnNum = 0; columnNum < SquareGrids.columnCount; columnNum++)
+                for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT; columnNum++)
                 {
-                    double[] Xdata = new double[SquareGrids.rowCount];
-                    double[] Ydata = new double[SquareGrids.rowCount];
-                    for (int rowNum = 0; rowNum < SquareGrids.rowCount; rowNum++)
+                    double[] Xdata = new double[SquareGrids.ROW_COUNT];
+                    double[] Ydata = new double[SquareGrids.ROW_COUNT];
+                    for (int rowNum = 0; rowNum < SquareGrids.ROW_COUNT; rowNum++)
                     {
                         Xdata[rowNum] = Tiles[columnNum, rowNum].center.X;
                         Ydata[rowNum] = Tiles[columnNum, rowNum].center.Y * -1;
@@ -67,9 +67,9 @@ static class Rank
                 return SquareTrendLine;
             case TilesType.Rectangle:
                 TrendLine RectangleTrendLine
-                    = new TrendLine(RectangleGrids.columnCount, RectangleGrids.rowCount);
+                    = new TrendLine(RectangleGrids.columnCount, RectangleGrids.ROW_COUNT);
                 #region 水平趨勢線
-                for (int rowNum = 0; rowNum < RectangleGrids.rowCount; rowNum++)
+                for (int rowNum = 0; rowNum < RectangleGrids.ROW_COUNT; rowNum++)
                 {
                     double[] Xdata = new double[RectangleGrids.columnCount];
                     double[] Ydata = new double[RectangleGrids.columnCount];
@@ -93,9 +93,9 @@ static class Rank
                 #region 垂直趨勢線
                 for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
                 {
-                    double[] Xdata = new double[RectangleGrids.rowCount];
-                    double[] Ydata = new double[RectangleGrids.rowCount];
-                    for (int rowNum = 0; rowNum < RectangleGrids.rowCount; rowNum++)
+                    double[] Xdata = new double[RectangleGrids.ROW_COUNT];
+                    double[] Ydata = new double[RectangleGrids.ROW_COUNT];
+                    for (int rowNum = 0; rowNum < RectangleGrids.ROW_COUNT; rowNum++)
                     {
                         Xdata[rowNum] = Tiles[columnNum, rowNum].center.X;
                         Ydata[rowNum] = Tiles[columnNum, rowNum].center.Y * -1;

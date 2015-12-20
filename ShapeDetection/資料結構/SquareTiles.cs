@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using 磁磚辨識評分;
+using SmileLib;
 
 internal class SquareTiles
 {
@@ -15,33 +17,36 @@ internal class SquareTiles
     /// <summary>代表整組磁磚</summary>
     public MCvBox2D[,] Tiles;
 
-    public string RankResult{get;private set;}
+    public ErrMark CurrentErrMark;
+
+    public TilesReport Report { get; private set; }
 
     /// <summary>正方磁磚墻建構式</summary>
     public SquareTiles(Point theGridRD, Point theGridLT, List<MCvBox2D> BaseMcvBox2DList, string fileName, RankArea rankArea)
     {
         myGrid = new SquareGrids(theGridRD, theGridLT);
-        Tiles = SquareTiles.TileArrayToTile2DArray(theGridRD, theGridLT, BaseMcvBox2DList);
+        Tiles = TileArrayToTile2DArray(theGridRD, theGridLT, BaseMcvBox2DList);
+        CurrentErrMark = new ErrMark();
         //進行評分
-        RankResult = RankSquareTile(fileName, Tiles, myGrid, rankArea);
+        Report = RankSquareTile(fileName, Tiles, myGrid, rankArea,ref CurrentErrMark);
     }
 
-    public static string RankSquareTile(string fileName, MCvBox2D[,] Tiles, SquareGrids myGrid, RankArea rankArea)
+    public static TilesReport RankSquareTile(string fileName, MCvBox2D[,] Tiles, SquareGrids myGrid, RankArea rankArea,ref ErrMark outPutErrMark)
     {
         #region 評分
-
-        report myReport = new report(fileName);
+        
+        TilesReport myReport = new TilesReport(fileName);
         int rowStart;
         int rowEnd;
         switch (rankArea)
         {
             case RankArea.Top:
                 rowStart = 0;
-                rowEnd = SquareGrids.rowCountHalf;
+                rowEnd = SquareGrids.ROW_COUNT_HALF;
                 break;
             case RankArea.Down:
-                rowStart = SquareGrids.rowCountHalf;
-                rowEnd = SquareGrids.rowCount;
+                rowStart = SquareGrids.ROW_COUNT_HALF;
+                rowEnd = SquareGrids.ROW_COUNT;
                 break;
             default:
                 throw SmileLib.EnumTool.OutOfEnum<RankArea>();
@@ -81,7 +86,7 @@ internal class SquareTiles
         myReport.newLine("溝縫間隔：");
 
         List<double> gap = new List<double>();
-
+        Dictionary<LineSegment2DF, double> gapAndDis = new Dictionary<LineSegment2DF, double>();
         #region 列與列間溝縫
 
         myReport.newLine("列與列間溝縫：");
@@ -89,16 +94,20 @@ internal class SquareTiles
         for (int rowNum = rowStart; rowNum < rowEnd - 1; rowNum++)
         {
             string rowReport = "第" + rowNum.ToString("D2") + "條：";
-            double[] rowError = new double[SquareGrids.columnCount * 2];
-            for (int columnNum = 0; columnNum < SquareGrids.columnCount; columnNum++)
+            double[] rowError = new double[SquareGrids.COLUMN_COUNT * 2];
+            for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT; columnNum++)
             {
                 Tile tempTileUp = new Tile(Tiles[columnNum, rowNum]);
                 Tile tempTileDown = new Tile(Tiles[columnNum, rowNum + 1]);
                 rowError[columnNum * 2] = myGrid.mmFormPixel(myMath.GetDis<float>(tempTileDown.conerLT.Y - tempTileUp.conerLD.Y));
+                LineSegment2DF leftLine = new LineSegment2DF(tempTileDown.conerLT, tempTileUp.conerLD);
                 rowError[columnNum * 2 + 1] = myGrid.mmFormPixel(myMath.GetDis<float>(tempTileDown.conerRT.Y - tempTileUp.conerRD.Y));
+                LineSegment2DF rightLine = new LineSegment2DF(tempTileDown.conerRT, tempTileUp.conerRD);
                 rowReport += "\t" + rowError[columnNum * 2] + "\t" + rowError[columnNum * 2 + 1];
                 double gapA = rowError[columnNum * 2];
                 double gapB = rowError[columnNum * 2 + 1];
+                gapAndDis.Add(leftLine, gapA);
+                gapAndDis.Add(rightLine, gapB);
                 allRowError.Add(gapA);
                 allRowError.Add(gapB);
                 gap.Add(gapA);
@@ -115,27 +124,31 @@ internal class SquareTiles
 
         myReport.newLine("行與行間溝縫：");
         List<double> allColumnError = new List<double>();
-        for (int columnNum = 0; columnNum < SquareGrids.columnCount - 1; columnNum++)
+        for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT - 1; columnNum++)
         {
             string columnReport = "第" + columnNum.ToString("D2") + "條：";
-            double[] columnError = new double[rowEnd * 2];
+            List<double> columnError = new List<double>();
 
             for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
             {
                 Tile tempTileLeft = new Tile(Tiles[columnNum, rowNum]);
                 Tile tempTileRight = new Tile(Tiles[columnNum + 1, rowNum]);
-                columnError[rowNum * 2] = myGrid.mmFormPixel(myMath.GetDis<float>(tempTileRight.conerLT.X - tempTileLeft.conerRT.X));
-                columnError[rowNum * 2 + 1] = myGrid.mmFormPixel(myMath.GetDis<float>(tempTileRight.conerLD.X - tempTileLeft.conerRD.X));
-                columnReport += "\t" + columnError[rowNum * 2] + "\t" + columnError[rowNum * 2 + 1];
-                double gapC = columnError[rowNum * 2];
-                double gapD = columnError[rowNum * 2 + 1];
+                double gapC = myGrid.mmFormPixel(myMath.GetDis<float>(tempTileRight.conerLT.X - tempTileLeft.conerRT.X));
+                columnError.Add(gapC);
+                LineSegment2DF topLine = new LineSegment2DF(tempTileRight.conerLT, tempTileLeft.conerRT);
+                double gapD = myGrid.mmFormPixel(myMath.GetDis<float>(tempTileRight.conerLD.X - tempTileLeft.conerRD.X));
+                columnError.Add(gapD);
+                LineSegment2DF downLine = new LineSegment2DF(tempTileRight.conerLD, tempTileLeft.conerRD);
+                columnReport += "\t" + gapC + "\t" + gapD;
+                gapAndDis.Add(topLine, gapC);
+                gapAndDis.Add(downLine, gapD);
                 allColumnError.Add(gapC);
                 allColumnError.Add(gapD);
                 gap.Add(gapC);
                 gap.Add(gapD);
             }
 
-            columnReport += "\t平均：\t" + columnError.Average() + "\t標準差\t" + columnError.StandardDeviation();
+            columnReport += "\t平均：\t" + columnError.Average() + "\t標準差\t" + columnError.ToArray().StandardDeviation();
             myReport.newLine(columnReport);
         }
         myReport.GapVSD = allColumnError.ToArray().StandardDeviation();
@@ -159,11 +172,17 @@ internal class SquareTiles
         myReport.newLine("極差平均比/t" + gapAvg);
         myReport.GapRangeAvgRatio = gapRangeAvgRatio;
 
+        var ErrGap = from outputGap in gapAndDis
+                     where !outputGap.Value.IsBetween(gapAvg - ErrMark.GapSquareTh, gapAvg + ErrMark.GapSquareTh)
+                     select outputGap.Key;
+        outPutErrMark.GapErr = ErrGap.ToList();
+
         #endregion 不分方向評分
 
         #endregion 評分_溝縫
 
         #region 評分_磁磚角趨勢線
+#if false
 
         myReport.newLine("");
         myReport.newLine("磁磚角趨勢線");
@@ -268,6 +287,7 @@ internal class SquareTiles
 
         #endregion 垂直趨勢線
 
+#endif
         #endregion 評分_磁磚角趨勢線
 
         #region 評分_磁磚中心趨勢線
@@ -281,11 +301,11 @@ internal class SquareTiles
         List<double> HorizontalTrendLineaAngle = new List<double>();
         for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
         {
-            double[] Xdata = new double[SquareGrids.columnCount];
-            double[] Ydata = new double[SquareGrids.columnCount];
+            double[] Xdata = new double[SquareGrids.COLUMN_COUNT];
+            double[] Ydata = new double[SquareGrids.COLUMN_COUNT];
             string HorizontalTrendLineX = "";
             string HorizontalTrendLineY = "";
-            for (int columnNum = 0; columnNum < SquareGrids.columnCount; columnNum++)
+            for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT; columnNum++)
             {
                 Xdata[columnNum] = Tiles[columnNum, rowNum].center.X;
                 HorizontalTrendLineX += "\t" + Xdata[columnNum];
@@ -310,20 +330,22 @@ internal class SquareTiles
 
         myReport.newLine("垂直趨勢線");
         List<double> VerticalTrendLineAngle = new List<double>();
-        for (int columnNum = 0; columnNum < SquareGrids.columnCount; columnNum++)
+        for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT; columnNum++)
         {
-            double[] Xdata = new double[rowEnd];
-            double[] Ydata = new double[rowEnd];
+            List<double> Xdata = new List<double>();
+            List<double> Ydata = new List<double>();
             string VerticalTrendLineX = "";
             string VerticalTrendLineY = "";
             for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
             {
-                Xdata[rowNum] = Tiles[columnNum, rowNum].center.X;
-                VerticalTrendLineX += "\t" + Xdata[rowNum];
-                Ydata[rowNum] = Tiles[columnNum, rowNum].center.Y * -1;
-                VerticalTrendLineY += "\t" + Ydata[rowNum];
+                float x = Tiles[columnNum, rowNum].center.X;
+                Xdata.Add(x);
+                VerticalTrendLineX += "\t" + x;
+                float y = Tiles[columnNum, rowNum].center.Y * -1;
+                Ydata.Add(y);
+                VerticalTrendLineY += "\t" + y;
             }
-            myStatistics.TrendLine TrendLine = new myStatistics.TrendLine(Ydata, Xdata);
+            myStatistics.TrendLine TrendLine = new myStatistics.TrendLine(Ydata.ToArray(), Xdata.ToArray());
             double angle = myTool.CorrectingAngle_YXtoXY(TrendLine.Angle());
             VerticalTrendLineAngle.Add(angle);
             myReport.newLine("第" + columnNum.ToString("D2") + "行：");
@@ -340,6 +362,7 @@ internal class SquareTiles
         #endregion 評分_磁磚中心趨勢線
 
         #region 評分_座標標準差
+#if false
 
         myReport.newLine("");
         myReport.newLine("座標標準差");
@@ -347,15 +370,15 @@ internal class SquareTiles
         #region 列中磁磚的Y方向
 
         myReport.newLine("列中磁磚的Y方向");
-        double[] RowY = new double[rowEnd];
-        double[] RowSpacing = new double[rowEnd - 1];
+        List<double> RowY = new List<double>();
+        List<double> RowSpacing = new List<double>();
 
         for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
         {
-            double[] TileYC = new double[SquareGrids.columnCount];
-            double[] TileYE = new double[SquareGrids.columnCount];
+            double[] TileYC = new double[SquareGrids.COLUMN_COUNT];
+            double[] TileYE = new double[SquareGrids.COLUMN_COUNT];
             string TileYReport = "第" + rowNum.ToString("D2") + "列：";
-            for (int columnNum = 0; columnNum < SquareGrids.columnCount; columnNum++)
+            for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT; columnNum++)
             {
                 TileYC[columnNum] = myGrid.mmFormPixel(Tiles[columnNum, rowNum].center.Y);
                 TileYReport += "\t" + TileYC[columnNum];
@@ -366,52 +389,55 @@ internal class SquareTiles
                 "\t平均：\t" + TileYC_avg
                 + "\t標準差\t" + TileYC.StandardDeviation() + "\t差：";
 
-            for (int columnNum = 0; columnNum < SquareGrids.columnCount; columnNum++)
+            for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT; columnNum++)
             {
                 TileYE[columnNum] = TileYC[columnNum] - TileYC_avg;
                 TileYReport += "\t" + TileYE[columnNum];
             }
             myReport.newLine(TileYReport);
-            RowY[rowNum] = TileYC.Average();
+            RowY.Add(TileYC.Average());
         }
 
         myReport.newLine("列與列間隔：");
         string RowSpacingReport = "\t";
-        for (int rowNum = rowStart; rowNum < rowEnd - 1; rowNum++)
+        for (int rowNum = 0; rowNum < RowY.Count - 1; rowNum++)
         {
-            RowSpacing[rowNum] = RowY[rowNum + 1] - RowY[rowNum];
-            RowSpacingReport += "\t" + RowSpacing[rowNum];
+            double spacing = RowY[rowNum + 1] - RowY[rowNum];
+            RowSpacing.Add(spacing);
+            RowSpacingReport += "\t" + spacing;
         }
         myReport.newLine(RowSpacingReport
             + "\t平均\t" + RowSpacing.Average()
-            + "\t標準差\t" + myStatistics.StandardDeviation(RowSpacing));
+            + "\t標準差\t" + myStatistics.StandardDeviation(RowSpacing.ToArray()));
 
         #endregion 列中磁磚的Y方向
 
         #region 行中磁磚的X方向
 
         myReport.newLine("行中磁磚的X方向");
-        double[] ColumnX = new double[SquareGrids.columnCount];
-        double[] ColumnSpacing = new double[SquareGrids.columnCount - 1];
+        double[] ColumnX = new double[SquareGrids.COLUMN_COUNT];
+        double[] ColumnSpacing = new double[SquareGrids.COLUMN_COUNT - 1];
 
-        for (int columnNum = 0; columnNum < SquareGrids.columnCount; columnNum++)
+        for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT; columnNum++)
         {
-            double[] TileXC = new double[rowEnd];
-            double[] TileXE = new double[rowEnd];
+            List<double> TileXC = new List<double>();
+            List<double> TileXE = new List<double>();
             string TileXReport = "第" + columnNum.ToString("D2") + "行：";
             for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
             {
-                TileXC[rowNum] = myGrid.mmFormPixel(Tiles[columnNum, rowNum].center.X);
-                TileXReport += "\t" + TileXC[rowNum];
+                double x = myGrid.mmFormPixel(Tiles[columnNum, rowNum].center.X);
+                TileXC.Add(x);
+                TileXReport += "\t" + x;
             }
             double TileXC_avg = TileXC.Average();
             TileXReport +=
                 "\t平均：\t" + TileXC.Average()
                 + "\t標準差\t" + TileXC.StandardDeviation() + "\t差：";
-            for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
+            for (int rowNum = 0; rowNum < TileXC.Count(); rowNum++)
             {
-                TileXE[rowNum] = TileXC[rowNum] - TileXC_avg;
-                TileXReport += "\t" + TileXE[rowNum];
+                double err = TileXC[rowNum] - TileXC_avg;
+                TileXE.Add(err);
+                TileXReport += "\t" + err;
             }
             myReport.newLine(TileXReport);
 
@@ -420,7 +446,7 @@ internal class SquareTiles
 
         myReport.newLine("行與行間隔：");
         string ColumnSpacingReport = "\t";
-        for (int columnNum = 0; columnNum < SquareGrids.columnCount - 1; columnNum++)
+        for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT - 1; columnNum++)
         {
             ColumnSpacing[columnNum] = ColumnX[columnNum + 1] - ColumnX[columnNum];
             ColumnSpacingReport += "\t" + ColumnSpacing[columnNum];
@@ -431,6 +457,7 @@ internal class SquareTiles
 
         #endregion 行中磁磚的X方向
 
+#endif
         #endregion 評分_座標標準差
 
         myReport.newLine("筆直度:");
@@ -442,15 +469,15 @@ internal class SquareTiles
         for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
         {
             string rowReport = "第" + rowNum + "列";
-            double[] Xdata = new double[SquareGrids.columnCount];
-            double[] Ydata = new double[SquareGrids.columnCount];
-            for (int column = 0; column < SquareGrids.columnCount; column++)
+            double[] Xdata = new double[SquareGrids.COLUMN_COUNT];
+            double[] Ydata = new double[SquareGrids.COLUMN_COUNT];
+            for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
             {
                 Xdata[column] = Tiles[column, rowNum].center.X;
                 Ydata[column] = Tiles[column, rowNum].center.Y * -1;
             }
             myStatistics.TrendLine theTrendLine = new myStatistics.TrendLine(Xdata, Ydata);
-            for (int column = 0; column < SquareGrids.columnCount; column++)
+            for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
             {
                 double Residual = Math.Abs(theTrendLine.PointToLineDis(Xdata[column], Ydata[column]));
                 Residual = myGrid.mmFormPixel(Residual);
@@ -459,7 +486,7 @@ internal class SquareTiles
             }
             myReport.newLine(rowReport);
         }
-        double rowResidualAvg = sumOfTileCenterToTrendLineH / (rowEnd * SquareGrids.columnCount);
+        double rowResidualAvg = sumOfTileCenterToTrendLineH / (SquareGrids.ROW_COUNT_HALF * SquareGrids.COLUMN_COUNT);
         string TotalRowReport = "平均Y方向離差:" + rowResidualAvg.ToString("0.000");
 
         myReport.newLine(TotalRowReport);
@@ -471,18 +498,19 @@ internal class SquareTiles
 
         myReport.newLine("X方向離差:");
         double sumOfTileCenterToTrendLineV = 0;
-        for (int column = 0; column < SquareGrids.columnCount; column++)
+        for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
         {
             string ColumnReport = "第" + column + "行";
-            double[] Xdata = new double[rowEnd];
-            double[] Ydata = new double[rowEnd];
-            for (int row = 0; row < rowEnd; row++)
+            List<double> Xdata = new List<double>();
+            List<double> Ydata = new List<double>();
+            
+            for (int row = rowStart; row < rowEnd; row++)
             {
-                Xdata[row] = Tiles[column, row].center.X;
-                Ydata[row] = Tiles[column, row].center.Y * -1;
+                Xdata.Add(Tiles[column, row].center.X);
+                Ydata.Add(Tiles[column, row].center.Y * -1);
             }
-            myStatistics.TrendLine theTrendLine = new myStatistics.TrendLine(Ydata, Xdata);
-            for (int row = 0; row < rowEnd; row++)
+            myStatistics.TrendLine theTrendLine = new myStatistics.TrendLine(Ydata.ToArray(), Xdata.ToArray());
+            for (int row = 0; row < Xdata.Count; row++)
             {
                 double Residual = Math.Abs(theTrendLine.PointToLineDis(Ydata[row], Xdata[row]));
                 Residual = myGrid.mmFormPixel(Residual);
@@ -491,7 +519,7 @@ internal class SquareTiles
             }
             myReport.newLine(ColumnReport);
         }
-        double columnResidualAvg = sumOfTileCenterToTrendLineV / (rowEnd * SquareGrids.columnCount);
+        double columnResidualAvg = sumOfTileCenterToTrendLineV / (SquareGrids.ROW_COUNT_HALF * SquareGrids.COLUMN_COUNT);
         string TotalColumnReport = "平均X方向離差:" + columnResidualAvg.ToString("0.000");
 
         myReport.newLine(TotalColumnReport);
@@ -509,15 +537,15 @@ internal class SquareTiles
         for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
         {
             string angleReport = "第" + rowNum.ToString("D2") + "列";
-            double[] angleDataInRow = new double[SquareGrids.columnCount];
-            for (int columnNum = 0; columnNum < SquareGrids.columnCount; columnNum++)
+            double[] angleDataInRow = new double[SquareGrids.COLUMN_COUNT];
+            for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT; columnNum++)
             {
                 angleDataInRow[columnNum] = Tiles[columnNum, rowNum].angle;
                 angleReport += "\t" + angleDataInRow[columnNum];
             }
             myReport.newLine(angleReport
                 + "\t平均：\t" + angleDataInRow.Average()
-                + "\t標準差：\t" + myStatistics.StandardDeviation(angleDataInRow));
+                + "\t標準差：\t" + angleDataInRow.StandardDeviation());
         }
 
         #endregion 印出每列
@@ -526,15 +554,15 @@ internal class SquareTiles
 
         string angleAvgInColumn = "平均：";
         string angleSDInColumn = "標準差：";
-        for (int columnNum = 0; columnNum < SquareGrids.columnCount; columnNum++)
+        for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT; columnNum++)
         {
-            double[] angleData = new double[rowEnd];
+            List<double> angleData = new List<double>();
             for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
             {
-                angleData[rowNum] = Tiles[columnNum, rowNum].angle;
+                angleData.Add(Tiles[columnNum, rowNum].angle);
             }
             angleAvgInColumn += "\t" + angleData.Average();
-            angleSDInColumn += "\t" + myStatistics.StandardDeviation(angleData);
+            angleSDInColumn += "\t" + angleData.StandardDeviation();
         }
         myReport.newLine(angleAvgInColumn);
         myReport.newLine(angleSDInColumn);
@@ -543,19 +571,19 @@ internal class SquareTiles
 
         #region 統計整個
 
-        double[] wholeAngleData = new double[rowEnd * SquareGrids.columnCount];
-        for (int columnNum = 0; columnNum < SquareGrids.columnCount; columnNum++)
+        List<double> wholeAngleData = new List<double>();
+        for (int columnNum = 0; columnNum < SquareGrids.COLUMN_COUNT; columnNum++)
         {
-            for (int row = 0; row < rowEnd; row++)
+            for (int row = rowStart; row < rowEnd; row++)
             {
-                wholeAngleData[row * SquareGrids.columnCount + columnNum] = Tiles[columnNum, row].angle;
+                wholeAngleData.Add(Tiles[columnNum, row].angle);
             }
         }
 
         #endregion 統計整個
 
         myReport.newLine("總平均：\t" + wholeAngleData.Average());
-        double AngleSD = myStatistics.StandardDeviation(wholeAngleData);
+        double AngleSD = wholeAngleData.StandardDeviation();
         myReport.newLine("總標準差：\t" + AngleSD);
         myReport.AngleSD = AngleSD;
 
@@ -570,7 +598,7 @@ internal class SquareTiles
         {
             List<PointF> pointSetInLineUpper = new List<PointF>();
             List<PointF> pointSetInLineLower = new List<PointF>();
-            for (int column = 0; column < SquareGrids.columnCount; column++)
+            for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
             {
                 Tile currentTile = new Tile(Tiles[column, rowNum]);
                 pointSetInLineUpper.Add(currentTile.conerLT);
@@ -605,7 +633,7 @@ internal class SquareTiles
         #region 水平離差
         myReport.newLine("磁磚角離差X方向:");
         List<double> residualSetX = new List<double>();
-        for (int column = 0; column < SquareGrids.columnCount; column++)
+        for (int column = 0; column < SquareGrids.COLUMN_COUNT; column++)
         {
             List<PointF> pointSetInLineLeft = new List<PointF>();
             List<PointF> pointSetInLineRight = new List<PointF>();
@@ -643,7 +671,8 @@ internal class SquareTiles
         #endregion
 
         myReport.SaveReport(rankArea);
-        return myReport.ScoringByVariance(TilesType.Square);
+        //return myReport.ScoringByVariance(TilesType.Square);
+        return myReport;
         //myReport.doToReport("評分報告");
 
         //return myReport.SaveReport(rankTopOnly);
@@ -656,11 +685,11 @@ internal class SquareTiles
     {
         #region 定位磁磚
 
-        MCvBox2D[,] tiles = new MCvBox2D[SquareGrids.columnCount, SquareGrids.rowCount];
-        bool[,] PositionOccupied = new bool[SquareGrids.rowCount, SquareGrids.columnCount];
-        for (int rowIndex = 0; rowIndex < SquareGrids.rowCount; rowIndex++)
+        MCvBox2D[,] tiles = new MCvBox2D[SquareGrids.COLUMN_COUNT, SquareGrids.ROW_COUNT];
+        bool[,] PositionOccupied = new bool[SquareGrids.ROW_COUNT, SquareGrids.COLUMN_COUNT];
+        for (int rowIndex = 0; rowIndex < SquareGrids.ROW_COUNT; rowIndex++)
         {
-            for (int columnIndex = 0; columnIndex < SquareGrids.columnCount; columnIndex++)
+            for (int columnIndex = 0; columnIndex < SquareGrids.COLUMN_COUNT; columnIndex++)
             {
                 PositionOccupied[columnIndex, rowIndex] = false;
             }
@@ -683,8 +712,8 @@ internal class SquareTiles
                 RightDown = item.center;
             }
         }
-        double avgGridSpacingH_Pixel = (RightDown.X - LeftTop.X) / (SquareGrids.columnCount - 1);
-        double avgGridSpacingV_Pixel = (RightDown.Y - LeftTop.Y) / (SquareGrids.rowCount - 1);
+        double avgGridSpacingH_Pixel = (RightDown.X - LeftTop.X) / (SquareGrids.COLUMN_COUNT - 1);
+        double avgGridSpacingV_Pixel = (RightDown.Y - LeftTop.Y) / (SquareGrids.ROW_COUNT - 1);
 
         for (int index = 0; index < BaseMcvBox2DList.Count; index++)
         {

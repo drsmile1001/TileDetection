@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Emgu.CV.Structure;
+using System.Drawing;
 
 class myTool
 {
@@ -39,6 +40,25 @@ class myTool
         }
 
         return tempAngle;
+    }
+
+    public static MCvBox2D AvgBox(MCvBox2D box1,MCvBox2D box2)
+    {
+        float Width = (box1.size.Width + box2.size.Width) / 2;
+        float Height = (box1.size.Height + box2.size.Height) / 2;
+        float X = (box1.center.X + box2.center.X) / 2;
+        float Y = (box1.center.Y + box2.center.Y) / 2;
+        float A = (box1.angle + box2.angle) / 2;
+
+        return new MCvBox2D(new System.Drawing.PointF(X, Y),
+            new System.Drawing.SizeF(Width, Height), A);
+    }
+
+    public static PointF AvgPointF(PointF p1, PointF p2)
+    {
+        float x = (p1.X + p2.X) / 2;
+        float y = (p1.Y + p2.Y) / 2;
+        return new PointF(x, y);
     }
 }
 

@@ -88,7 +88,7 @@ public static class myStatistics
 
 
     /// <summary>取得標準差</summary>
-    public static double StandardDeviation(this double[] num)
+    public static double StandardDeviation(this IEnumerable<double> num)
     {
         double avg = num.Average();
         double SumOfSqrs = 0.0;
@@ -97,7 +97,7 @@ public static class myStatistics
         {
             SumOfSqrs += Math.Pow(d - avg, 2);
         }
-        return Math.Sqrt((SumOfSqrs / (num.Length - 1)));
+        return Math.Sqrt((SumOfSqrs / (num.Count() - 1)));
     }
 
     

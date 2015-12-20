@@ -8,18 +8,18 @@ using System.Drawing;
 class SquareGrids
 {
     /// <summary>總列數:12</summary>
-    public const int rowCount = 12;
+    public const int ROW_COUNT = 12;
     /// <summary>一半列數:6</summary>
-    public const int rowCountHalf = 6;
+    public const int ROW_COUNT_HALF = 6;
     /// <summary>總行數:12</summary>
-    public const int columnCount = 12;
+    public const int COLUMN_COUNT = 12;
     
     /// <summary>正方形網格的斜邊長度(mm)</summary>
-    public const double hypotenuse = 848.5281374;
+    public const double HYPOTENUSE = 848.5281374;
     /// <summary>正方形磁磚長(mm)</summary>
-    public const double tileLength = 46.78125;
+    public const double TILE_LENGTH = 46.78125;
     /// <summary>溝縫寬(mm)</summary>
-    public const double gapWidth = 3;
+    public const double GAP_WIDTH = 3;
 
   
     /// <summary>網格間距</summary>
@@ -63,10 +63,10 @@ class SquareGrids
         GridsLT = theGridLT;
         GridsRD = theGridRD;
 
-        mmPerPixel = SquareGrids.hypotenuse / myMath.GetDistance(GridsLT, GridsRD);
+        mmPerPixel = SquareGrids.HYPOTENUSE / myMath.GetDistance(GridsLT, GridsRD);
 
-        gridSpacingInPixel = (float)((SquareGrids.tileLength + SquareGrids.gapWidth) / mmPerPixel);
-        tileLengthInPixel = (float)(SquareGrids.tileLength / mmPerPixel);
+        gridSpacingInPixel = (float)((SquareGrids.TILE_LENGTH + SquareGrids.GAP_WIDTH) / mmPerPixel);
+        tileLengthInPixel = (float)(SquareGrids.TILE_LENGTH / mmPerPixel);
     }
 
     /// <summary>磁磚理論上的左上點</summary>

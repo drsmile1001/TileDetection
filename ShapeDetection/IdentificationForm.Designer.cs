@@ -1,4 +1,4 @@
-namespace ºÏ¿j¿ëÃÑµû¤À
+ï»¿namespace ç£ç£šè¾¨è­˜è©•åˆ†
 {
     partial class IdentificationForm
     {
@@ -105,7 +105,7 @@ namespace ºÏ¿j¿ëÃÑµû¤À
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(75, 23);
             this.btnSave.TabIndex = 10;
-            this.btnSave.Text = "Àx¦s";
+            this.btnSave.Text = "å„²å­˜";
             this.btnSave.UseVisualStyleBackColor = true;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
@@ -115,7 +115,7 @@ namespace ºÏ¿j¿ëÃÑµû¤À
             this.btnGotoUserDef.Name = "btnGotoUserDef";
             this.btnGotoUserDef.Size = new System.Drawing.Size(92, 23);
             this.btnGotoUserDef.TabIndex = 9;
-            this.btnGotoUserDef.Text = "¨Ï¥Î¿ëÃÑµ²ªG";
+            this.btnGotoUserDef.Text = "ä½¿ç”¨è¾¨è­˜çµæœ";
             this.btnGotoUserDef.UseVisualStyleBackColor = true;
             this.btnGotoUserDef.Click += new System.EventHandler(this.btnGotoUserDef_Click);
             this.btnGotoUserDef.MouseMove += new System.Windows.Forms.MouseEventHandler(this.btnGotoUserDef_MouseMove);
@@ -138,7 +138,7 @@ namespace ºÏ¿j¿ëÃÑµû¤À
             this.lblBoxFind.Name = "lblBoxFind";
             this.lblBoxFind.Size = new System.Drawing.Size(41, 12);
             this.lblBoxFind.TabIndex = 6;
-            this.lblBoxFind.Text = "§ä¨ì¡G";
+            this.lblBoxFind.Text = "æ‰¾åˆ°ï¼š";
             // 
             // btnRun
             // 

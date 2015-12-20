@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using 磁磚辨識評分;
 
 internal class RectangleTiles
 {
@@ -14,7 +15,9 @@ internal class RectangleTiles
     /// <summary>代表整組磁磚</summary>
     public MCvBox2D[,] Tiles;
 
-    public string RankResult { get; private set; }
+    public ErrMark CurrentErrMark;
+
+    public TilesReport Report { get; private set; }
 
     public RectangleTiles(Point theGridRD, Point theGridLT, List<MCvBox2D> BaseMcvBox2DList, string fileName, RankArea rankArea)
     {
@@ -22,26 +25,26 @@ internal class RectangleTiles
         Tiles = RectangleTiles.TileArrayToTile2DArray(theGridRD, theGridLT, BaseMcvBox2DList);
 
         //評分
-        RankResult = rankRectangleTiles(fileName, Tiles, myGrid, rankArea);
+        Report = rankRectangleTiles(fileName, Tiles, myGrid, rankArea);
     }
 
-    public static string rankRectangleTiles(string fileName, MCvBox2D[,] Tiles, RectangleGrids myGrid, RankArea rankArea)
+    public static TilesReport rankRectangleTiles(string fileName, MCvBox2D[,] Tiles, RectangleGrids myGrid, RankArea rankArea)
     {
         #region 評分
 
-        report myReport = new report(fileName);
+        TilesReport myReport = new TilesReport(fileName);
         int rowEnd;
         int rowStart;
         switch (rankArea)
         {
             case RankArea.Top:
                 rowStart = 0;
-                rowEnd = RectangleGrids.rowCountHalf;
+                rowEnd = RectangleGrids.ROW_COUNT_HALF;
                 break;
 
             case RankArea.Down:
-                rowStart = RectangleGrids.rowCountHalf;
-                rowEnd = RectangleGrids.rowCount;
+                rowStart = RectangleGrids.ROW_COUNT_HALF;
+                rowEnd = RectangleGrids.ROW_COUNT;
                 break;
 
             default:
@@ -201,7 +204,7 @@ internal class RectangleTiles
         for (int columnNum = 0; columnNum < RectangleGrids.gapCountInColumn; columnNum++)
         {
             string columnReport = "第" + columnNum.ToString("D2") + "條：";
-            double[] columnError = new double[rowEnd];
+            List<double> columnError = new List<double>();
 
             for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
             {
@@ -211,9 +214,9 @@ internal class RectangleTiles
                     Tile tempTileRight = new Tile(Tiles[columnNum + 2, rowNum]);
                     double disA = myGrid.mmFormPixel(myMath.GetDis<float>(tempTileRight.conerLT.X - tempTileLeft.conerRT.X));
                     double disB = myGrid.mmFormPixel(myMath.GetDis<float>(tempTileRight.conerLD.X - tempTileLeft.conerRD.X));
-                    columnError[rowNum - (columnNum % 2)] = disA;
-                    columnError[rowNum - (columnNum % 2) + 1] = disB;
-                    columnReport += "\t" + columnError[rowNum - (columnNum % 2)] + "\t" + columnError[rowNum - (columnNum % 2) + 1];
+                    columnError.Add(disA);
+                    columnError.Add(disB);
+                    columnReport += "\t" + disA + "\t" + disB;
 
                     allColumnError.Add(disA);
                     allColumnError.Add(disB);
@@ -224,7 +227,7 @@ internal class RectangleTiles
             columnReport += "\t平均：\t" + columnError.Average() + "\t標準差\t" + columnError.StandardDeviation();
             myReport.newLine(columnReport);
         }
-        myReport.GapVSD = allColumnError.ToArray().StandardDeviation();
+        myReport.GapVSD = allColumnError.StandardDeviation();
 
         #endregion 行與行間溝縫
 
@@ -250,6 +253,7 @@ internal class RectangleTiles
         #endregion 評分_溝縫
 
         #region 評分_磁磚角趨勢線
+#if false
 
         myReport.newLine("");
         myReport.newLine("磁磚角趨勢線");
@@ -350,6 +354,7 @@ internal class RectangleTiles
 
         #endregion 垂直趨勢線
 
+#endif
         #endregion 評分_磁磚角趨勢線
 
         #region 評分_磁磚中心趨勢線
@@ -396,18 +401,25 @@ internal class RectangleTiles
         List<double> VerticalTrendLineAngle = new List<double>();
         for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
         {
-            double[] Xdata = new double[rowEnd / 2];
-            double[] Ydata = new double[rowEnd / 2];
+            List<double> Xdata = new List<double>();
+            List<double> Ydata = new List<double>();
+            
             string VerticalTrendLineX = "";
             string VerticalTrendLineY = "";
-            for (int rowNum = rowStart; rowNum < rowEnd / 2; rowNum++)
+            for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
             {
-                Xdata[rowNum] = Tiles[columnNum, rowNum * 2 + (columnNum % 2)].center.X;
-                VerticalTrendLineX += "\t" + Xdata[rowNum];
-                Ydata[rowNum] = Tiles[columnNum, rowNum * 2 + (columnNum % 2)].center.Y * -1;
-                VerticalTrendLineY += "\t" + Ydata[rowNum];
+                if ((columnNum + rowNum) % 2 == 1)
+                {
+                    continue;
+                }
+                double x = Tiles[columnNum, rowNum].center.X;
+                double y = Tiles[columnNum, rowNum].center.Y * -1;
+                Xdata.Add(x);
+                VerticalTrendLineX += "\t" + x;
+                Ydata.Add(y);
+                VerticalTrendLineY += "\t" + y;
             }
-            myStatistics.TrendLine TrendLine = new myStatistics.TrendLine(Ydata, Xdata);
+            myStatistics.TrendLine TrendLine = new myStatistics.TrendLine(Ydata.ToArray(), Xdata.ToArray());
             double angle = myTool.CorrectingAngle_YXtoXY(TrendLine.Angle());
             VerticalTrendLineAngle.Add(angle);
 
@@ -425,6 +437,7 @@ internal class RectangleTiles
         #endregion 評分_磁磚中心趨勢線
 
         #region 評分_座標標準差
+#if false
 
         myReport.newLine("");
         myReport.newLine("座標標準差");
@@ -432,8 +445,8 @@ internal class RectangleTiles
         #region 列中磁磚的Y方向
 
         myReport.newLine("列中磁磚的Y方向");
-        double[] RowY = new double[rowEnd];
-        double[] RowSpacing = new double[rowEnd - 1];
+        List<double> RowY = new List<double>();
+        List<double> RowSpacing = new List<double>();
 
         for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
         {
@@ -461,37 +474,43 @@ internal class RectangleTiles
                 TileYReport += "\t" + TileYE[columnNum];
             }
             myReport.newLine(TileYReport);
-            RowY[rowNum] = TileYC.Average();
+            RowY.Add(TileYC.Average());
         }
 
         myReport.newLine("列與列間隔：");
         string RowSpacingReport = "\t";
-        for (int rowNum = rowStart; rowNum < rowEnd - 1; rowNum++)
+        for (int rowNum = 0; rowNum < RowY.Count - 1; rowNum++)
         {
-            RowSpacing[rowNum] = RowY[rowNum + 1] - RowY[rowNum];
-            RowSpacingReport += "\t" + RowSpacing[rowNum];
+            double spacing = RowY[rowNum + 1] - RowY[rowNum];
+            RowSpacing.Add(spacing);
+            RowSpacingReport += "\t" + spacing;
         }
         myReport.newLine(RowSpacingReport
             + "\t平均\t" + RowSpacing.Average()
-            + "\t標準差\t" + myStatistics.StandardDeviation(RowSpacing));
+            + "\t標準差\t" + RowSpacing.StandardDeviation());
 
         #endregion 列中磁磚的Y方向
 
         #region 行中磁磚的X方向
 
         myReport.newLine("行中磁磚的X方向");
-        double[] ColumnX = new double[RectangleGrids.columnCount];
-        double[] ColumnSpacing = new double[RectangleGrids.columnCount - 1];
+        List<double> ColumnX = new List<double>();
+        List<double> ColumnSpacing = new List<double>();
 
         for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
         {
-            double[] TileXC = new double[rowEnd / 2];
-            double[] TileXE = new double[rowEnd / 2];
+            List<double> TileXC = new List<double>();
+            List<double> TileXE = new List<double>();
             string TileXReport = "第" + columnNum.ToString("D2") + "行：";
-            for (int rowNum = rowStart; rowNum < rowEnd / 2; rowNum++)
+            for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
             {
-                TileXC[rowNum] = myGrid.mmFormPixel(Tiles[columnNum, rowNum * 2 + (columnNum % 2)].center.X);
-                TileXReport += "\t" + TileXC[rowNum];
+                if ((columnNum + rowNum) % 2 == 1)
+                {
+                    continue;
+                }
+                double centerX = myGrid.mmFormPixel(Tiles[columnNum, rowNum].center.X);
+                TileXC.Add(centerX);
+                TileXReport += "\t" + centerX;
             }
             double TileXC_avg = TileXC.Average();
             if (columnNum % 2 == 1)
@@ -499,12 +518,13 @@ internal class RectangleTiles
                 TileXReport += "\t";
             }
             TileXReport +=
-                "\t平均：\t" + TileXC.Average()
-                + "\t標準差\t" + myStatistics.StandardDeviation(TileXC) + "\t差：";
-            for (int rowNum = rowStart; rowNum < rowEnd / 2; rowNum++)
+                "\t平均：\t" + TileXC_avg
+                + "\t標準差\t" + TileXC.StandardDeviation() + "\t差：";
+            for (int rowNum = 0; rowNum < TileXC.Count; rowNum++)
             {
-                TileXE[rowNum] = TileXC[rowNum] - TileXC_avg;
-                TileXReport += "\t" + TileXE[rowNum];
+                double err = TileXC[rowNum] - TileXC_avg;
+                TileXE.Add(err);
+                TileXReport += "\t" + err;
             }
             myReport.newLine(TileXReport);
 
@@ -524,6 +544,7 @@ internal class RectangleTiles
 
         #endregion 行中磁磚的X方向
 
+#endif
         #endregion 評分_座標標準差
 
         #region 評分_磁磚中心與趨勢線距離和
@@ -569,17 +590,24 @@ internal class RectangleTiles
         for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
         {
             string ColumnReport = "第" + columnNum + "行";
-            double[] Xdata = new double[rowEnd / 2];
-            double[] Ydata = new double[rowEnd / 2];
-            for (int rowNum = rowStart; rowNum < rowEnd / 2; rowNum++)
+
+            List<double> Xdata = new List<double>();
+            List<double> Ydata = new List<double>();
+            for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
             {
-                Xdata[rowNum] = Tiles[columnNum, rowNum * 2 + (columnNum % 2)].center.X;
-                Ydata[rowNum] = Tiles[columnNum, rowNum * 2 + (columnNum % 2)].center.Y * -1;
+                if ((columnNum + rowNum) % 2 == 1)
+                {
+                    continue;
+                }
+                double x = Tiles[columnNum, rowNum].center.X;
+                double y = Tiles[columnNum, rowNum].center.Y * -1;
+                Xdata.Add(x);
+                Ydata.Add(y);
             }
-            myStatistics.TrendLine theTrendLine = new myStatistics.TrendLine(Ydata, Xdata);
-            for (int rowNum = rowStart; rowNum < rowEnd / 2; rowNum++)
+            myStatistics.TrendLine theTrendLine = new myStatistics.TrendLine(Ydata.ToArray(), Xdata.ToArray());
+            for (int index = 0; index < Xdata.Count; index++)
             {
-                double Residual = Math.Abs(theTrendLine.PointToLineDis(Ydata[rowNum], Xdata[rowNum]));
+                double Residual = Math.Abs(theTrendLine.PointToLineDis(Ydata[index], Xdata[index]));
                 Residual = myGrid.mmFormPixel(Residual);
                 sumOfTileCenterToTrendLineV += Residual;
                 ColumnReport += "\t" + Residual;
@@ -643,13 +671,18 @@ internal class RectangleTiles
         string angleSDInColumn = "標準差";
         for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
         {
-            double[] angleData = new double[rowEnd / 2];
-            for (int rowNum = rowStart; rowNum < rowEnd / 2; rowNum++)
+            List<double> angleData = new List<double>();
+            for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
             {
-                angleData[rowNum] = Tiles[columnNum, rowNum * 2 + (columnNum % 2)].angle;
+                if ((columnNum + rowNum) % 2 == 1)
+                {
+                    continue;
+                }
+
+                angleData.Add(Tiles[columnNum, rowNum].angle);
             }
             angleAvgInColumn += "\t" + angleData.Average();
-            angleSDInColumn += "\t" + myStatistics.StandardDeviation(angleData);
+            angleSDInColumn += "\t" + angleData.StandardDeviation();
         }
         myReport.newLine(angleAvgInColumn);
         myReport.newLine(angleSDInColumn);
@@ -658,14 +691,15 @@ internal class RectangleTiles
 
         #region 統計整個
 
-        double[] wholeAngleData = new double[rowEnd * RectangleGrids.columnCount];
+        List<double> wholeAngleData = new List<double>();
         for (int columnNum = 0; columnNum < RectangleGrids.columnCount; columnNum++)
         {
             for (int rowNum = rowStart; rowNum < rowEnd; rowNum++)
             {
                 if ((rowNum + columnNum) % 2 == 0)
                 {
-                    wholeAngleData[rowNum * RectangleGrids.columnCount + columnNum] = Tiles[columnNum, rowNum].angle;
+
+                    wholeAngleData.Add(Tiles[columnNum, rowNum].angle);
                 }
             }
         }
@@ -775,7 +809,8 @@ internal class RectangleTiles
         //string output = myReport.result(TilesType.Rectangle);
         //myReport.doToReport("評分報告");
         myReport.SaveReport(rankArea);
-        return myReport.ScoringByVariance(TilesType.Rectangle);
+        //return myReport.ScoringByVariance(TilesType.Rectangle);
+        return myReport;
         //return myReport.SaveReport(rankTopOnly);
 
         #endregion 評分
@@ -787,12 +822,12 @@ internal class RectangleTiles
         #region 定位磁磚
 
         RectangleGrids myGrid = new RectangleGrids(theGridRD, theGridLT);
-        MCvBox2D[,] tiles = new MCvBox2D[RectangleGrids.columnCount, RectangleGrids.rowCount];
+        MCvBox2D[,] tiles = new MCvBox2D[RectangleGrids.columnCount, RectangleGrids.ROW_COUNT];
 
-        bool[,] PositionOccupied = new bool[RectangleGrids.columnCount, RectangleGrids.rowCount];
+        bool[,] PositionOccupied = new bool[RectangleGrids.columnCount, RectangleGrids.ROW_COUNT];
         for (int columnIndex = 0; columnIndex < RectangleGrids.columnCount; columnIndex++)
         {
-            for (int rowIndex = 0; rowIndex < RectangleGrids.rowCount; rowIndex++)
+            for (int rowIndex = 0; rowIndex < RectangleGrids.ROW_COUNT; rowIndex++)
             {
                 PositionOccupied[columnIndex, rowIndex] = false;
             }

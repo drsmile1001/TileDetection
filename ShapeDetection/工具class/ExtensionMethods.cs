@@ -1,25 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Emgu.CV;
+﻿using Emgu.CV;
 using Emgu.CV.Structure;
+using System;
 using System.Drawing;
 
-
-static class ExtensionMethods
+internal static class ExtensionMethods
 {
     public static Color GetColor(this Image<Bgr, Byte> image, int x, int y)
     {
-        try
+        if (x > image.Width || y > image.Height)
         {
-            return Color.FromArgb(image.Data[x, y, 2], image.Data[x, y, 1], image.Data[x, y, 0]);
-        }
-        catch
-        {
-
             return Color.Black;
         }
+
+        return Color.FromArgb(image.Data[y, x, 2], image.Data[y, x, 1], image.Data[y, x, 0]);
     }
 
     public static Color GetColor(this Image<Bgr, Byte> image, float x, float y)
@@ -43,6 +36,7 @@ static class ExtensionMethods
         Color c = image.GetColor(x, y);
         return GetGray(c);
     }
+
     public static double GetGray(this Image<Bgr, Byte> image, float x, float y)
     {
         Color c = image.GetColor(x, y);
@@ -53,7 +47,6 @@ static class ExtensionMethods
     {
         return 0.072169 * c.B + 0.715160 * c.G + 0.212671 * c.R;
     }
-
 
     public static void SetColor(this Image<Bgr, Byte> image, int x, int y, Color c)
     {
@@ -73,8 +66,4 @@ static class ExtensionMethods
     {
         return new Point((int)p.X, (int)p.Y);
     }
-
-
 }
-
-

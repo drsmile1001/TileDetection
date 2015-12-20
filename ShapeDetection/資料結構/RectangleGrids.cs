@@ -8,10 +8,10 @@ using System.Drawing;
 class RectangleGrids
 {
     /// <summary>長方型網格中的列數:8</summary>
-    public const int rowCount = 8;
+    public const int ROW_COUNT = 8;
 
     /// <summary>長方型網格中的一半列數:4</summary>
-    public const int rowCountHalf = 4;
+    public const int ROW_COUNT_HALF = 4;
 
     /// <summary>長方型網格中的行數:7</summary>
     public const int columnCount = 7;
