@@ -13,7 +13,7 @@ class Grid
 }
 #endif
 
-enum Grid
+public enum Grid
 {
     /// <summary>正方形網格</summary>
     SquareGrid,

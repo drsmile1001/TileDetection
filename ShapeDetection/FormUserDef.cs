@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -7,6 +8,9 @@ using Emgu.CV;
 using Emgu.CV.Structure;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
+using 磁磚辨識評分.資料結構;
 
 #region 存檔用
 
@@ -32,7 +36,8 @@ namespace 磁磚辨識評分
 
         #region 公用變數
 
-        private string fileName;
+        /// <summary>目前開起來的檔案</summary>
+        private string FileName { get; set; }
         private Image<Bgr, Byte> ImageForShow;
         private Image<Bgr, Byte> BaseImage;
 
@@ -116,7 +121,7 @@ namespace 磁磚辨識評分
             SetPixelPerCentimeter(Path.GetFileNameWithoutExtension(fileName));
             //顯示檔名
             Invoke(new Action(() => { Text = fileName; ; }));
-            this.fileName = fileName;
+            FileName = fileName;
         }
 
         #endregion 初始化
@@ -843,20 +848,20 @@ namespace 磁磚辨識評分
         /// <summary>載入舊檔</summary>
         private void btnLoad_Click(object sender, EventArgs e)
         {
-            fileName = "";
+            FileName = "";
 
             if (openFileDialog1.ShowDialog() != DialogResult.OK)
             {
                 return;
             }
-            fileName = openFileDialog1.FileName;
+            FileName = openFileDialog1.FileName;
             OpenFile();
         }
 
         private void OpenFile()
         {
             BinaryFormatter formatter = new BinaryFormatter();
-            Stream input = File.OpenRead(fileName);
+            Stream input = File.OpenRead(FileName);
             object inputDeserialize = formatter.Deserialize(input);
             input.Close();
             IdentifyTileFile tempTileFile;
@@ -873,7 +878,7 @@ namespace 磁磚辨識評分
                 tempTileFile = (IdentifyTileFile)inputDeserialize;
                 Invoke(new Action(() => { lblFileEdition.Text = "舊版本"; }));
             }
-            LoadIDTiles(tempTileFile.BaseImage, tempTileFile.getMcvbox2DList(), fileName);
+            LoadIDTiles(tempTileFile.BaseImage, tempTileFile.getMcvbox2DList(), FileName);
         }
 
         /// <summary>依據給予的檔名，設定比例參數</summary>
@@ -917,7 +922,7 @@ namespace 磁磚辨識評分
                 throw new Exception("磁磚數量不正確，無法評分");
             }
 
-            SquareTiles mySquareTiles = new SquareTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName, rankArea);
+            SquareTiles mySquareTiles = new SquareTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, FileName, rankArea);
             mySquareTiles.Report.ScoringByVariance(TilesType.Square,isTop);
             if (mySquareTiles.msg == SquareTiles.error_TilePosition)
             {
@@ -997,7 +1002,7 @@ namespace 磁磚辨識評分
                 throw new Exception("磁磚數量不正確，無法評分");
             }
 
-            RectangleTiles myRetangleTiles = new RectangleTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, fileName, rankArea);
+            RectangleTiles myRetangleTiles = new RectangleTiles(WorkspaceRightDown, WorkspaceLeftTop, BaseMcvBox2DList, FileName, rankArea);
             myRetangleTiles.Report.ScoringByVariance(TilesType.Rectangle,isTop);
             if (myRetangleTiles.msg == RectangleTiles.error_TilePosition)
             {
@@ -1954,7 +1959,7 @@ namespace 磁磚辨識評分
             //對每個選定的檔案進行處理
             foreach (var item in myMessageListBox.SelectResult)
             {
-                fileName = item;
+                FileName = item;
                 WorkspaceLeftTop = new Point(-1, -1);
                 WorkspaceRightDown = new Point(-1, -1);
                 OpenFile();
@@ -2026,6 +2031,29 @@ namespace 磁磚辨識評分
                 MessageBox.Show(ee.Message);
             }
             return fileList;
+        }
+
+        /// <summary>測試</summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnTest_Click(object sender, EventArgs e)
+        {
+            IdentifyTileFileV3 file = new IdentifyTileFileV3
+            {
+                BaseImageBytes = new byte[] {123,011},
+                Boxes = new List<MCvBox2D> { new MCvBox2D {angle = 0,center = new PointF(10,20),size = new SizeF(40,50)} },
+                WorkAreaLeftTop = new Point(70,80),
+                WorkAreaRightDown = new Point(200,400),
+                WorkAreaType = Grid.RectangleGrid
+            };
+
+            JObject jObject = JObject.FromObject(file);
+            File.WriteAllText("text.txt",jObject.ToString());
+            //picboxWatchArea.Image = file.GetImage();
+            Process.Start("text.txt");
+            var jsonString = File.ReadAllText("text.txt");
+            var newFile = JObject.Parse(jsonString).ToObject<IdentifyTileFileV3>();
+            Console.WriteLine();
         }
     }
 

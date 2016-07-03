@@ -161,6 +161,7 @@
     <Compile Include="資料結構\ErrMark.cs" />
     <Compile Include="資料結構\Grid.cs" />
     <Compile Include="工具class\Rank.cs" />
+    <Compile Include="資料結構\IdentifyTileFileV3.cs" />
     <Compile Include="資料結構\IndentifyTileFileV2.cs" />
     <Compile Include="資料結構\myBox.cs" />
     <Compile Include="資料結構\IdentifyTileFile.cs" />

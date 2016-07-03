@@ -9,7 +9,7 @@ using Emgu.CV;
 [Serializable]
 public class IdentifyTileFile
 {
-    public Image<Bgr, Byte> BaseImage;
+    public Image<Bgr, byte> BaseImage;
     public myBox[] boxs;
 
     public void setBoxs(List<MCvBox2D> inputBoxs)

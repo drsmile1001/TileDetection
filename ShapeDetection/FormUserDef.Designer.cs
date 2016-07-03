@@ -62,6 +62,7 @@
             this.lblFileEdition = new System.Windows.Forms.Label();
             this.btnIdentification = new System.Windows.Forms.Button();
             this.lblEditMsg = new System.Windows.Forms.Label();
+            this.btnTest = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.picboxWatchArea)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picboxThumbnail)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -235,6 +236,7 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.btnTest);
             this.splitContainer1.Panel2.Controls.Add(this.btnBatchScore);
             this.splitContainer1.Panel2.Controls.Add(this.groupBox3);
             this.splitContainer1.Panel2.Controls.Add(this.groupBox2);
@@ -451,6 +453,16 @@
             this.lblEditMsg.Size = new System.Drawing.Size(0, 12);
             this.lblEditMsg.TabIndex = 14;
             // 
+            // btnTest
+            // 
+            this.btnTest.Location = new System.Drawing.Point(5, 620);
+            this.btnTest.Name = "btnTest";
+            this.btnTest.Size = new System.Drawing.Size(75, 23);
+            this.btnTest.TabIndex = 31;
+            this.btnTest.Text = "測試";
+            this.btnTest.UseVisualStyleBackColor = true;
+            this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
+            // 
             // FormUserDef
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -519,5 +531,6 @@
         private System.Windows.Forms.RadioButton rdbRankDown;
         private System.Windows.Forms.RadioButton rdbRankTop;
         private System.Windows.Forms.Button btnBatchScore;
+        private System.Windows.Forms.Button btnTest;
     }
 }
