@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Windows.Forms;
 using Emgu.CV;
@@ -799,86 +800,58 @@ namespace 磁磚辨識評分
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-#if false
-            IdentifyTileFile tempTileFile = new IdentifyTileFile();
-            tempTileFile.BaseImage = BaseImage.Clone();
-            tempTileFile.setBoxs(BaseMcvBox2DList);
-
-            string filename = "";
-            saveFileDialog1.FileName = Path.GetFileNameWithoutExtension(this.Text);
-
-            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            byte[] imageBytes;
+            using (var ms = new MemoryStream())
             {
-                filename = saveFileDialog1.FileName;
-                BinaryFormatter formatter = new BinaryFormatter();
-                Stream output = File.Create(filename);
-                formatter.Serialize(output, tempTileFile);
-                output.Close();
+                Image image = BaseImage.Bitmap;
+                image.Save(ms, ImageFormat.Png);
+                ms.Close();
+                imageBytes = ms.ToArray();
             }
 
-#endif
-            IdentifyTileFileV2 tempTileFileV2 = new IdentifyTileFileV2();
-            tempTileFileV2.BaseImage = BaseImage.Clone();
-            tempTileFileV2.setBoxs(BaseMcvBox2DList);
-            tempTileFileV2.WorkAreaType = WorkspaceType;
-            tempTileFileV2.WorkAreaLeftTop = WorkspaceLeftTop;
-            tempTileFileV2.WorkAreaRightDown = WorkspaceRightDown;
-
-            string fileName = "";
-            saveFileDialog1.FileName = Path.GetFileNameWithoutExtension(this.Text);
-            if (saveFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            IdentifyTileFileV3 v3File = new IdentifyTileFileV3
             {
-                fileName = saveFileDialog1.FileName;
-                BinaryFormatter formatter = new BinaryFormatter();
-                Stream output = File.Create(fileName);
-                formatter.Serialize(output, tempTileFileV2);
-                output.Close();
-                ImageForShow.ToBitmap().Save(fileName + "imageForShow.bmp");
-                using (StreamWriter sw = new StreamWriter("BaseMcvBox2D.txt"))
-                {
-                    foreach (var box in BaseMcvBox2DList)
-                    {
-                        sw.WriteLine(box.center.X + "\t" + box.center.Y + "\t" + box.angle);
-                    }
-                    sw.Close();
-                }
-            }
+                BaseImageBytes = imageBytes,
+                Boxes = BaseMcvBox2DList,
+                WorkAreaLeftTop = WorkspaceLeftTop,
+                WorkAreaRightDown = WorkspaceRightDown,
+                WorkAreaType = WorkspaceType
+            };
+            var newFileName = $"{Path.GetDirectoryName(FileName)}\\{Path.GetFileNameWithoutExtension(FileName)}.json";
+            v3File.Save(newFileName);
+            Invoke(new Action(() => { lblMsg.Text = $"已儲存為{newFileName}"; }));
         }
 
         /// <summary>載入舊檔</summary>
         private void btnLoad_Click(object sender, EventArgs e)
         {
             FileName = "";
-
+            openFileDialog1.Filter = "data|*.data";
             if (openFileDialog1.ShowDialog() != DialogResult.OK)
             {
                 return;
             }
             FileName = openFileDialog1.FileName;
-            OpenFile();
+            var v2File = OpenV2File(FileName);
+            WorkspaceType = v2File.WorkAreaType;
+            WorkspaceLeftTop = v2File.WorkAreaLeftTop;
+            WorkspaceRightDown = v2File.WorkAreaRightDown;
+            LoadIDTiles(v2File.GetImage(), v2File.Boxes, FileName);
         }
 
-        private void OpenFile()
+        /// <summary>打開第二版檔案</summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        private static IdentifyTileFileV3 OpenV2File(string fileName)
         {
             BinaryFormatter formatter = new BinaryFormatter();
-            Stream input = File.OpenRead(FileName);
+            Stream input = File.OpenRead(fileName);
             object inputDeserialize = formatter.Deserialize(input);
             input.Close();
-            IdentifyTileFile tempTileFile;
-            try
-            {
-                tempTileFile = (IdentifyTileFileV2)inputDeserialize;
-                WorkspaceType = (tempTileFile as IdentifyTileFileV2).WorkAreaType;
-                WorkspaceLeftTop = (tempTileFile as IdentifyTileFileV2).WorkAreaLeftTop;
-                WorkspaceRightDown = (tempTileFile as IdentifyTileFileV2).WorkAreaRightDown;
-                Invoke(new Action(() => { lblFileEdition.Text = "新版本"; }));
-            }
-            catch (Exception)
-            {
-                tempTileFile = (IdentifyTileFile)inputDeserialize;
-                Invoke(new Action(() => { lblFileEdition.Text = "舊版本"; }));
-            }
-            LoadIDTiles(tempTileFile.BaseImage, tempTileFile.getMcvbox2DList(), FileName);
+            IdentifyTileFileV2 tempTileFile = (IdentifyTileFileV2) inputDeserialize;
+            var v3File = IdentifyTileFileV3.FromIdentifyTileFileV2(tempTileFile);
+            
+            return v3File;
         }
 
         /// <summary>依據給予的檔名，設定比例參數</summary>
@@ -1905,8 +1878,7 @@ namespace 磁磚辨識評分
 
         private void btnBatchScore_Click(object sender, EventArgs e)
         {
-            ThreadStart ts = new ThreadStart(BatchScore);
-            Thread t = new Thread(ts);
+            Thread t = new Thread(BatchScore);
             t.Start();
         }
 
@@ -1914,90 +1886,131 @@ namespace 磁磚辨識評分
         private void BatchScore()
         {
             //取得評分的檔案列表
-            List<string> sourceFiles = GetBatchFiles(new string[] { ".data" });
+            List<string> sourceFiles = GetBatchFiles(new[] { ".json" });
             SmileLib.MessageListBox myMessageListBox = new SmileLib.MessageListBox();
             var result = myMessageListBox.ShowDialog(sourceFiles, "查找到的檔案");
             if (result != DialogResult.OK)
             {
                 return;
             }
-            //舊版本列表
-            List<string> oldFiles = new List<string>();
+
+            var fileList = myMessageListBox.SelectResult.ToList();
+
             //評分結果
-            List<string> dataLines = new List<string>();
+            List<ScoreRecord> scoreRecords = new List<ScoreRecord>();
 
-            //依據給予的網格類型，給予磁磚類型
-            Func<Grid, TilesType> GridToTileType = g =>
-             {
-                 switch (g)
-                 {
-                     case Grid.SquareGrid:
-                         return TilesType.Square;
-
-                     case Grid.RectangleGrid:
-                         return TilesType.Rectangle;
-
-                     default:
-                         throw SmileLib.EnumTool.OutOfEnum<Grid>();
-                 }
-             };
+            //轉換網格類型為磁磚類型
+            var gridToTileTypeMap = new Dictionary<Grid, TilesType>
+            {
+                [Grid.RectangleGrid] = TilesType.Rectangle,
+                [Grid.SquareGrid] = TilesType.Square
+            };
 
             //依據給定的網格類型，給予評分方法
-            Func<Grid, Func<bool,bool,TilesReport>> ScoreSample = G =>
-             {
-                 switch (G)
-                 {
-                     case Grid.SquareGrid:
-                         return ScoreSquareSample;
-                     case Grid.RectangleGrid:
-                         return ScoreRectangleSample;
-                     default:
-                         throw SmileLib.EnumTool.OutOfEnum<Grid>();
-                 }
-             };
-
+            var scoreSampleMap = new Dictionary<Grid, Func<bool, bool, TilesReport>>
+            {
+                [Grid.RectangleGrid] = ScoreRectangleSample,
+                [Grid.SquareGrid] = ScoreSquareSample
+            };
+            int fileCount = fileList.Count;
+            Invoke(new Action(() => myProgressBar.Maximum = fileCount));
+            int doneCount = 0;
             //對每個選定的檔案進行處理
             foreach (var item in myMessageListBox.SelectResult)
             {
-                FileName = item;
-                WorkspaceLeftTop = new Point(-1, -1);
-                WorkspaceRightDown = new Point(-1, -1);
-                OpenFile();
-                if (WorkspaceLeftTop == new Point(-1, -1) || WorkspaceRightDown == new Point(-1, -1))
+                var doneCountNow = doneCount;
+                Invoke(new Action(() =>
                 {
-                    oldFiles.Add(item);
-                }
-
+                    lblMsg.Text = $"進度{doneCountNow}/{fileCount}";
+                    myProgressBar.Value = doneCountNow;
+                }));
+                FileName = item;
+                
+                var tempTileFile = IdentifyTileFileV3.OpenFromFile(FileName);
+                WorkspaceLeftTop = tempTileFile.WorkAreaLeftTop;
+                WorkspaceRightDown = tempTileFile.WorkAreaRightDown;
+                WorkspaceType = tempTileFile.WorkAreaType;
+                LoadIDTiles(tempTileFile.GetImage(), tempTileFile.Boxes, FileName);
+                
                 //進行正規化
-                TileRegularize(GridToTileType(WorkspaceType));
+                //TileRegularize(gridToTileTypeMap[WorkspaceType]);
 
                 //自動微調位置
                 AutoAdjustAllTile();
                 //切換到評分上半部
                 Invoke(new Action(() => { rdbRankTop.Checked = true; }));
-                dataLines.Add(ScoreSample(WorkspaceType)(false,true).Record.ToDataLine());
+                scoreRecords.Add(scoreSampleMap[WorkspaceType](false, true).Record);
                 //切換到評分下半部
                 Invoke(new Action(() => { rdbRankDown.Checked = true; }));
-                dataLines.Add(ScoreSample(WorkspaceType)(false,false).Record.ToDataLine());
+                scoreRecords.Add(scoreSampleMap[WorkspaceType](false, false).Record);
+                doneCount += 1;
             }
-
+            
             //輸出結果
             using (StreamWriter sw = new StreamWriter("BatchScoringResult.txt", false))
             {
                 sw.WriteLine("受測者\t狀態\t區塊\t上下\t勾縫指標量\t平行指標量\t筆直指標量\t旋轉角指標量\t方林法殘差量\t勾縫分數\t平行分數\t筆直分數\t旋轉角分數\t綜合分數\t方林法分數");
-                foreach (var item in dataLines)
+                foreach (var item in scoreRecords)
                 {
-                    sw.WriteLine(item);
+                    sw.WriteLine(item.ToDataLine());
                 }
                 sw.Close();
             }
             Process.Start("BatchScoringResult.txt");
+            Invoke(new Action(() =>
+            {
+                lblMsg.Text = "完成";
+                myProgressBar.Value = 0;
+            }));
+        }
+
+        /// <summary>針對辨識完成檔進行批次評分</summary>
+        private void BatchConvertV2ToV3()
+        {
+            //取得評分的檔案列表
+            List<string> sourceFiles = GetBatchFiles(new [] { ".data" });
+            SmileLib.MessageListBox myMessageListBox = new SmileLib.MessageListBox();
+            var result = myMessageListBox.ShowDialog(sourceFiles, "查找到的檔案");
+            if (result != DialogResult.OK)
+            {
+                return;
+            }
+
+            var fileList = myMessageListBox.SelectResult.ToList();
+            int fileCount = fileList.Count;
+            Invoke(new Action(() => myProgressBar.Maximum = fileCount));
+            int doneCount = 0;
+            //對每個選定的檔案進行處理
+            foreach (var item in myMessageListBox.SelectResult)
+            {
+                var doneCountNow = doneCount;
+                Invoke(new Action(() =>
+                {
+                    lblMsg.Text = $"進度{doneCountNow}/{fileCount}";
+                    myProgressBar.Value = doneCountNow;
+                }));
+                FileName = item;
+                WorkspaceLeftTop = new Point(-1, -1);
+                WorkspaceRightDown = new Point(-1, -1);
+                var tempTileFile = OpenV2File(FileName);
+                
+                var ext = Path.GetExtension(FileName);
+                if(ext == null) throw new ArgumentException("字串無法解析得到附檔名",FileName);
+                var newFileName = $"{FileName.Substring(0, FileName.Length - ext.Length)}.json";
+                tempTileFile.Save(newFileName);
+                doneCount += 1;
+            }
+            Invoke(new Action(() =>
+            {
+                lblMsg.Text = "完成";
+                myProgressBar.Value = 0;
+            }));
         }
 
         /// <summary>取得目錄</summary>
-        private List<string> GetBatchFiles(string[] fileType)
+        private static List<string> GetBatchFiles(IEnumerable<string> fileType)
         {
-            /// <summary>資料夾選擇對話視窗</summary>
+            //資料夾選擇對話視窗
             FolderSelect.FolderSelectDialog fsd = new FolderSelect.FolderSelectDialog();
 
             List<string> fileList = new List<string>();
@@ -2009,22 +2022,13 @@ namespace 磁磚辨識評分
             }
             try
             {
-                IEnumerable<string> files = Directory.EnumerateFiles(fsd.FileName, "*", SearchOption.AllDirectories);
-                files = files.OrderBy(s => s);
-                if (files.Count() < 1)
+                List<string> files = Directory.EnumerateFiles(fsd.FileName, "*", SearchOption.AllDirectories)
+                    .OrderBy(s => s).ToList();
+                return files.Where(fileName =>
                 {
-                    return fileList;
-                }
-                foreach (string file in files)
-                {
-                    string ext = Path.GetExtension(file);
-
-                    if (Array.FindIndex(fileType, s => s.Equals(ext)) == -1)
-                    {
-                        continue;
-                    }
-                    fileList.Add(file);
-                }
+                    var ext = Path.GetExtension(fileName);
+                    return fileType.Contains(ext);
+                }).ToList();
             }
             catch (Exception ee)
             {
@@ -2038,22 +2042,29 @@ namespace 磁磚辨識評分
         /// <param name="e"></param>
         private void btnTest_Click(object sender, EventArgs e)
         {
-            IdentifyTileFileV3 file = new IdentifyTileFileV3
-            {
-                BaseImageBytes = new byte[] {123,011},
-                Boxes = new List<MCvBox2D> { new MCvBox2D {angle = 0,center = new PointF(10,20),size = new SizeF(40,50)} },
-                WorkAreaLeftTop = new Point(70,80),
-                WorkAreaRightDown = new Point(200,400),
-                WorkAreaType = Grid.RectangleGrid
-            };
+            
+            
+        }
 
-            JObject jObject = JObject.FromObject(file);
-            File.WriteAllText("text.txt",jObject.ToString());
-            //picboxWatchArea.Image = file.GetImage();
-            Process.Start("text.txt");
-            var jsonString = File.ReadAllText("text.txt");
-            var newFile = JObject.Parse(jsonString).ToObject<IdentifyTileFileV3>();
-            Console.WriteLine();
+        private void lblMsg_Click(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void btnLoadV3_Click(object sender, EventArgs e)
+        {
+            FileName = "";
+            openFileDialog1.Filter = "JSON檔|*.json";
+            if (openFileDialog1.ShowDialog() != DialogResult.OK)
+            {
+                return;
+            }
+            FileName = openFileDialog1.FileName;
+            var v3File = IdentifyTileFileV3.OpenFromFile(FileName);
+            WorkspaceType = v3File.WorkAreaType;
+            WorkspaceLeftTop = v3File.WorkAreaLeftTop;
+            WorkspaceRightDown = v3File.WorkAreaRightDown;
+            LoadIDTiles(v3File.GetImage(), v3File.Boxes, FileName);
         }
     }
 

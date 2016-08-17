@@ -39,13 +39,13 @@
         public double AS { get; set; }
 
         /// <summary>綜合分數</summary>
-        public double CompositeScore { get { return (GS + LPS + LSS + AS) / 4; } }
+        public double CompositeScore => (GS + LPS + LSS + AS) / 4;
 
         /// <summary>方林法用的指標</summary>
         public double FangLingIndex { get; set; }
 
         /// <summary>方林法分數</summary>
-        public double FangLingScore { get {return 100 - 20 * FangLingIndex; } }
+        public double FangLingScore => 100 - 20 * FangLingIndex;
 
         /// <summary>輸出用於MessageBox之類臨時顯示的字串</summary>
         /// <returns></returns>

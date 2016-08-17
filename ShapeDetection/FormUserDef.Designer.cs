@@ -43,7 +43,8 @@
             this.lblMsg = new System.Windows.Forms.Label();
             this.btnDimRectangleWorkingspace = new System.Windows.Forms.Button();
             this.btnGiveGradeRectangle = new System.Windows.Forms.Button();
-            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.myProgressBar = new System.Windows.Forms.ProgressBar();
+            this.btnTest = new System.Windows.Forms.Button();
             this.btnBatchScore = new System.Windows.Forms.Button();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.rdbRankDown = new System.Windows.Forms.RadioButton();
@@ -59,29 +60,28 @@
             this.nudPixelPerCentimeter = new System.Windows.Forms.NumericUpDown();
             this.btnSquareTileRegularize = new System.Windows.Forms.Button();
             this.btnRectangleTileRegularize = new System.Windows.Forms.Button();
-            this.lblFileEdition = new System.Windows.Forms.Label();
             this.btnIdentification = new System.Windows.Forms.Button();
             this.lblEditMsg = new System.Windows.Forms.Label();
-            this.btnTest = new System.Windows.Forms.Button();
+            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.btnLoadV3 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.picboxWatchArea)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picboxThumbnail)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
-            this.splitContainer1.Panel1.SuspendLayout();
-            this.splitContainer1.Panel2.SuspendLayout();
-            this.splitContainer1.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudRectangularTileAdj)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudPixelPerCentimeter)).BeginInit();
+            this.tableLayoutPanel1.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // picboxWatchArea
             // 
             this.picboxWatchArea.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.picboxWatchArea.Location = new System.Drawing.Point(0, 0);
+            this.picboxWatchArea.Location = new System.Drawing.Point(3, 3);
             this.picboxWatchArea.Name = "picboxWatchArea";
-            this.picboxWatchArea.Size = new System.Drawing.Size(849, 694);
+            this.picboxWatchArea.Size = new System.Drawing.Size(748, 657);
             this.picboxWatchArea.TabIndex = 4;
             this.picboxWatchArea.TabStop = false;
             this.picboxWatchArea.Click += new System.EventHandler(this.picboxWatchArea_Click);
@@ -93,7 +93,7 @@
             // picboxThumbnail
             // 
             this.picboxThumbnail.BackColor = System.Drawing.Color.Black;
-            this.picboxThumbnail.Location = new System.Drawing.Point(3, 3);
+            this.picboxThumbnail.Location = new System.Drawing.Point(20, 3);
             this.picboxThumbnail.Name = "picboxThumbnail";
             this.picboxThumbnail.Size = new System.Drawing.Size(160, 120);
             this.picboxThumbnail.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -108,9 +108,9 @@
             // 
             this.lbxTileList.FormattingEnabled = true;
             this.lbxTileList.ItemHeight = 12;
-            this.lbxTileList.Location = new System.Drawing.Point(3, 129);
+            this.lbxTileList.Location = new System.Drawing.Point(6, 129);
             this.lbxTileList.Name = "lbxTileList";
-            this.lbxTileList.Size = new System.Drawing.Size(154, 64);
+            this.lbxTileList.Size = new System.Drawing.Size(179, 64);
             this.lbxTileList.TabIndex = 6;
             this.lbxTileList.SelectedIndexChanged += new System.EventHandler(this.lbxTileList_SelectedIndexChanged);
             // 
@@ -137,7 +137,7 @@
             // lblTileCount
             // 
             this.lblTileCount.AutoSize = true;
-            this.lblTileCount.Location = new System.Drawing.Point(84, 204);
+            this.lblTileCount.Location = new System.Drawing.Point(87, 204);
             this.lblTileCount.Name = "lblTileCount";
             this.lblTileCount.Size = new System.Drawing.Size(41, 12);
             this.lblTileCount.TabIndex = 9;
@@ -145,7 +145,7 @@
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(5, 562);
+            this.btnSave.Location = new System.Drawing.Point(8, 562);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(75, 23);
             this.btnSave.TabIndex = 10;
@@ -159,11 +159,11 @@
             // 
             // btnLoad
             // 
-            this.btnLoad.Location = new System.Drawing.Point(103, 562);
+            this.btnLoad.Location = new System.Drawing.Point(106, 562);
             this.btnLoad.Name = "btnLoad";
             this.btnLoad.Size = new System.Drawing.Size(75, 23);
             this.btnLoad.TabIndex = 11;
-            this.btnLoad.Text = "讀檔";
+            this.btnLoad.Text = "讀V2檔";
             this.btnLoad.UseVisualStyleBackColor = true;
             this.btnLoad.Click += new System.EventHandler(this.btnLoad_Click);
             // 
@@ -195,11 +195,13 @@
             // lblMsg
             // 
             this.lblMsg.AutoSize = true;
-            this.lblMsg.Location = new System.Drawing.Point(127, 204);
+            this.lblMsg.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblMsg.Location = new System.Drawing.Point(3, 663);
             this.lblMsg.Name = "lblMsg";
-            this.lblMsg.Size = new System.Drawing.Size(23, 12);
+            this.lblMsg.Size = new System.Drawing.Size(748, 30);
             this.lblMsg.TabIndex = 14;
-            this.lblMsg.Text = "123";
+            this.lblMsg.Text = "訊息";
+            this.lblMsg.Click += new System.EventHandler(this.lblMsg_Click);
             // 
             // btnDimRectangleWorkingspace
             // 
@@ -221,42 +223,27 @@
             this.btnGiveGradeRectangle.UseVisualStyleBackColor = true;
             this.btnGiveGradeRectangle.Click += new System.EventHandler(this.btnGiveGradeRectangle_Click);
             // 
-            // splitContainer1
+            // myProgressBar
             // 
-            this.splitContainer1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer1.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
-            this.splitContainer1.IsSplitterFixed = true;
-            this.splitContainer1.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer1.Name = "splitContainer1";
+            this.myProgressBar.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.myProgressBar.Location = new System.Drawing.Point(757, 666);
+            this.myProgressBar.Name = "myProgressBar";
+            this.myProgressBar.Size = new System.Drawing.Size(194, 24);
+            this.myProgressBar.TabIndex = 32;
             // 
-            // splitContainer1.Panel1
+            // btnTest
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.picboxWatchArea);
-            // 
-            // splitContainer1.Panel2
-            // 
-            this.splitContainer1.Panel2.Controls.Add(this.btnTest);
-            this.splitContainer1.Panel2.Controls.Add(this.btnBatchScore);
-            this.splitContainer1.Panel2.Controls.Add(this.groupBox3);
-            this.splitContainer1.Panel2.Controls.Add(this.groupBox2);
-            this.splitContainer1.Panel2.Controls.Add(this.groupBox1);
-            this.splitContainer1.Panel2.Controls.Add(this.lblFileEdition);
-            this.splitContainer1.Panel2.Controls.Add(this.btnIdentification);
-            this.splitContainer1.Panel2.Controls.Add(this.lblMsg);
-            this.splitContainer1.Panel2.Controls.Add(this.lblEditMsg);
-            this.splitContainer1.Panel2.Controls.Add(this.picboxThumbnail);
-            this.splitContainer1.Panel2.Controls.Add(this.lbxTileList);
-            this.splitContainer1.Panel2.Controls.Add(this.lblTileCount);
-            this.splitContainer1.Panel2.Controls.Add(this.btnSave);
-            this.splitContainer1.Panel2.Controls.Add(this.btnLoad);
-            this.splitContainer1.Size = new System.Drawing.Size(1044, 696);
-            this.splitContainer1.SplitterDistance = 851;
-            this.splitContainer1.TabIndex = 15;
+            this.btnTest.Location = new System.Drawing.Point(8, 620);
+            this.btnTest.Name = "btnTest";
+            this.btnTest.Size = new System.Drawing.Size(75, 23);
+            this.btnTest.TabIndex = 31;
+            this.btnTest.Text = "測試";
+            this.btnTest.UseVisualStyleBackColor = true;
+            this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
             // 
             // btnBatchScore
             // 
-            this.btnBatchScore.Location = new System.Drawing.Point(5, 591);
+            this.btnBatchScore.Location = new System.Drawing.Point(8, 591);
             this.btnBatchScore.Name = "btnBatchScore";
             this.btnBatchScore.Size = new System.Drawing.Size(75, 23);
             this.btnBatchScore.TabIndex = 30;
@@ -272,7 +259,7 @@
             this.groupBox3.Controls.Add(this.btnGiveGradeSquare);
             this.groupBox3.Controls.Add(this.btnGiveGradeRectangle);
             this.groupBox3.Controls.Add(this.btnDimRectangleWorkingspace);
-            this.groupBox3.Location = new System.Drawing.Point(9, 453);
+            this.groupBox3.Location = new System.Drawing.Point(12, 453);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Size = new System.Drawing.Size(170, 100);
             this.groupBox3.TabIndex = 29;
@@ -307,7 +294,7 @@
             // 
             this.groupBox2.Controls.Add(this.ckbDrawBold);
             this.groupBox2.Controls.Add(this.ckbShowWeb);
-            this.groupBox2.Location = new System.Drawing.Point(3, 403);
+            this.groupBox2.Location = new System.Drawing.Point(6, 403);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(175, 44);
             this.groupBox2.TabIndex = 28;
@@ -319,9 +306,9 @@
             this.ckbDrawBold.AutoSize = true;
             this.ckbDrawBold.Location = new System.Drawing.Point(6, 21);
             this.ckbDrawBold.Name = "ckbDrawBold";
-            this.ckbDrawBold.Size = new System.Drawing.Size(60, 16);
+            this.ckbDrawBold.Size = new System.Drawing.Size(48, 16);
             this.ckbDrawBold.TabIndex = 20;
-            this.ckbDrawBold.Text = "畫粗線";
+            this.ckbDrawBold.Text = "塗滿";
             this.ckbDrawBold.UseVisualStyleBackColor = true;
             // 
             // ckbShowWeb
@@ -346,7 +333,7 @@
             this.groupBox1.Controls.Add(this.nudPixelPerCentimeter);
             this.groupBox1.Controls.Add(this.btnSquareTileRegularize);
             this.groupBox1.Controls.Add(this.btnRectangleTileRegularize);
-            this.groupBox1.Location = new System.Drawing.Point(3, 228);
+            this.groupBox1.Location = new System.Drawing.Point(6, 228);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(176, 169);
             this.groupBox1.TabIndex = 27;
@@ -427,17 +414,9 @@
             this.btnRectangleTileRegularize.UseVisualStyleBackColor = true;
             this.btnRectangleTileRegularize.Click += new System.EventHandler(this.btnRectangleTileRegularize_Click);
             // 
-            // lblFileEdition
-            // 
-            this.lblFileEdition.AutoSize = true;
-            this.lblFileEdition.Location = new System.Drawing.Point(76, 680);
-            this.lblFileEdition.Name = "lblFileEdition";
-            this.lblFileEdition.Size = new System.Drawing.Size(0, 12);
-            this.lblFileEdition.TabIndex = 25;
-            // 
             // btnIdentification
             // 
-            this.btnIdentification.Location = new System.Drawing.Point(3, 199);
+            this.btnIdentification.Location = new System.Drawing.Point(6, 199);
             this.btnIdentification.Name = "btnIdentification";
             this.btnIdentification.Size = new System.Drawing.Size(75, 23);
             this.btnIdentification.TabIndex = 19;
@@ -448,27 +427,66 @@
             // lblEditMsg
             // 
             this.lblEditMsg.AutoSize = true;
-            this.lblEditMsg.Location = new System.Drawing.Point(84, 363);
+            this.lblEditMsg.Location = new System.Drawing.Point(87, 363);
             this.lblEditMsg.Name = "lblEditMsg";
             this.lblEditMsg.Size = new System.Drawing.Size(0, 12);
             this.lblEditMsg.TabIndex = 14;
             // 
-            // btnTest
+            // tableLayoutPanel1
             // 
-            this.btnTest.Location = new System.Drawing.Point(5, 620);
-            this.btnTest.Name = "btnTest";
-            this.btnTest.Size = new System.Drawing.Size(75, 23);
-            this.btnTest.TabIndex = 31;
-            this.btnTest.Text = "測試";
-            this.btnTest.UseVisualStyleBackColor = true;
-            this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
+            this.tableLayoutPanel1.ColumnCount = 2;
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 200F));
+            this.tableLayoutPanel1.Controls.Add(this.myProgressBar, 1, 1);
+            this.tableLayoutPanel1.Controls.Add(this.picboxWatchArea, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.lblMsg, 0, 1);
+            this.tableLayoutPanel1.Controls.Add(this.panel1, 1, 0);
+            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
+            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+            this.tableLayoutPanel1.RowCount = 2;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(954, 693);
+            this.tableLayoutPanel1.TabIndex = 16;
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.btnLoadV3);
+            this.panel1.Controls.Add(this.picboxThumbnail);
+            this.panel1.Controls.Add(this.btnTest);
+            this.panel1.Controls.Add(this.lbxTileList);
+            this.panel1.Controls.Add(this.btnBatchScore);
+            this.panel1.Controls.Add(this.btnIdentification);
+            this.panel1.Controls.Add(this.groupBox3);
+            this.panel1.Controls.Add(this.lblEditMsg);
+            this.panel1.Controls.Add(this.groupBox2);
+            this.panel1.Controls.Add(this.lblTileCount);
+            this.panel1.Controls.Add(this.btnSave);
+            this.panel1.Controls.Add(this.groupBox1);
+            this.panel1.Controls.Add(this.btnLoad);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panel1.Location = new System.Drawing.Point(757, 3);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(194, 657);
+            this.panel1.TabIndex = 33;
+            // 
+            // btnLoadV3
+            // 
+            this.btnLoadV3.Location = new System.Drawing.Point(107, 591);
+            this.btnLoadV3.Name = "btnLoadV3";
+            this.btnLoadV3.Size = new System.Drawing.Size(75, 23);
+            this.btnLoadV3.TabIndex = 32;
+            this.btnLoadV3.Text = "讀V3檔";
+            this.btnLoadV3.UseVisualStyleBackColor = true;
+            this.btnLoadV3.Click += new System.EventHandler(this.btnLoadV3_Click);
             // 
             // FormUserDef
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1044, 696);
-            this.Controls.Add(this.splitContainer1);
+            this.ClientSize = new System.Drawing.Size(954, 693);
+            this.Controls.Add(this.tableLayoutPanel1);
             this.KeyPreview = true;
             this.Name = "FormUserDef";
             this.Text = "FormUserDef";
@@ -478,11 +496,6 @@
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.FormUserDef_KeyUp);
             ((System.ComponentModel.ISupportInitialize)(this.picboxWatchArea)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.picboxThumbnail)).EndInit();
-            this.splitContainer1.Panel1.ResumeLayout(false);
-            this.splitContainer1.Panel2.ResumeLayout(false);
-            this.splitContainer1.Panel2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
-            this.splitContainer1.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
             this.groupBox2.ResumeLayout(false);
@@ -491,6 +504,10 @@
             this.groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudRectangularTileAdj)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudPixelPerCentimeter)).EndInit();
+            this.tableLayoutPanel1.ResumeLayout(false);
+            this.tableLayoutPanel1.PerformLayout();
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -512,7 +529,6 @@
         private System.Windows.Forms.Label lblMsg;
         private System.Windows.Forms.Button btnDimRectangleWorkingspace;
         private System.Windows.Forms.Button btnGiveGradeRectangle;
-        private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.Label lblEditMsg;
         private System.Windows.Forms.Button btnSquareTileRegularize;
         private System.Windows.Forms.CheckBox ckbShowWeb;
@@ -524,7 +540,6 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.NumericUpDown nudRectangularTileAdj;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label lblFileEdition;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.GroupBox groupBox1;
@@ -532,5 +547,9 @@
         private System.Windows.Forms.RadioButton rdbRankTop;
         private System.Windows.Forms.Button btnBatchScore;
         private System.Windows.Forms.Button btnTest;
+        private System.Windows.Forms.ProgressBar myProgressBar;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Button btnLoadV3;
     }
 }

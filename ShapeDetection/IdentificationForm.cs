@@ -470,11 +470,9 @@ namespace 磁磚辨識評分
 
         private void btnGotoUserDef_Click(object sender, EventArgs e)
         {
-//            FormUserDef frm = new FormUserDef(imgOrg, boxListDone, openFileDialog1.FileName);
             Program.myUserDefForm.Invoke(
-                new Action<Image<Bgr, Byte>, List<MCvBox2D>,string>(Program.myUserDefForm.LoadIDTiles),
-                new object[] { imgOrg, boxListDone, openFileDialog1.FileName });
-            this.Close();
+                new Action(() => Program.myUserDefForm.LoadIDTiles(imgOrg, boxListDone, openFileDialog1.FileName)));
+            Close();
         }
 
         private void MainForm_Load(object sender, EventArgs e)
